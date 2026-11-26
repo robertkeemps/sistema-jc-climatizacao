@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - ClimaOS</title>
+
+    <!-- Bootstrap 4.6 (estrutura de grid, formulários e modais) e FontAwesome (ícones) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* =====================================================================
+           1. VARIÁVEIS DE CORES E ESTRUTURA BASE (DARK UI)
+           ===================================================================== */
+        :root {
+            --bg-body: #0d121d;
+            --bg-sidebar: #090d15;
+            --bg-card: #0f1726;
+            --bg-input: #131b2c;
+            --border-color: #1a2538;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --primary-blue: #0284c7;
+            --primary-hover: #0369a1;
+        }
+
+        /* Fixa a altura em 100vh para a barra lateral ficar parada enquanto só a lista rola */
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* =====================================================================
+           2. BARRA LATERAL FIXA (SIDEBAR)
+           ===================================================================== */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.1; }
+        .brand-sub { font-size: 0.72rem; color: var(--text-muted); margin: 0; }
+
+        .nav-list { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 0.35rem; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: #fff; background-color: rgba(255, 255, 255, 0.04); text-decoration: none; }
+        .nav-link.active { color: #38bdf8; background-color: rgba(2, 132, 199, 0.15); font-weight: 500; }
+
+        /* Cartão de perfil do técnico/administrador logado na base da barra lateral */
+        .user-profile {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge-admin {
+            background-color: #6366f1;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background-color: #131c2d;
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            padding: 0.4rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+        .btn-logout:hover { color: #ef4444; background-color: #1c2230; text-decoration: none; }
+
+        /* =====================================================================
+           3. ÁREA PRINCIPAL, TOPBAR E TABELA DE CLIENTES
+           ===================================================================== */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            height: 65px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            background-color: var(--bg-sidebar);
+            flex-shrink: 0;
+        }
+
+        .search-global { position: relative; width: 320px; }
+        .search-global input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            border-radius: 6px;
+            padding: 0.45rem 0.75rem 0.45rem 2rem;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        .search-global i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .notification-btn { position: relative; background: none; border: none; color: #94a3b8; font-size: 1.15rem; cursor: pointer; }
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: #f59e0b;
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-area { padding: 2rem; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title { font-size: 1.45rem; font-weight: 600; margin: 0; color: #fff; }
+        .page-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .btn-add-client {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-add-client:hover { background-color: #0369a1; color: #fff; }
+
+        /* Banner vermelho de erro retornado pelo backend (ex: CPF ou CEP inválido) */
+        .alert-danger-custom {
+            background-color: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            color: #fca5a5;
+            border-radius: 8px;
+            padding: 0.85rem 1.2rem;
+            margin-bottom: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+        }
+        .alert-danger-custom button {
+            background: none;
+            border: none;
+            color: #fca5a5;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .filter-input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            font-size: 0.88rem;
+            width: 320px;
+        }
+
+        /* Botões de alternância Ativos / Inativos */
+        .status-toggle-btn {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .status-toggle-btn:hover { color: #fff; text-decoration: none; background-color: rgba(255, 255, 255, 0.05); }
+        .status-toggle-btn.active { background-color: #0284c7; border-color: #0284c7; color: #fff; font-weight: 500; }
+
+        .table-responsive {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #0c1320;
+        }
+
+        .table-clients {
+            width: 100%;
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            color: #cbd5e1;
+            font-size: 0.88rem;
+        }
+
+        .table-clients th {
+            padding: 1rem;
+            background-color: #090e18;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-clients td {
+            padding: 1.1rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .table-clients tr:last-child td { border-bottom: none; }
+
+        .client-id { color: #38bdf8; font-weight: 600; }
+        .client-name { color: #fff; font-weight: 500; }
+
+        /* Botões de ação por linha (Editar, Inativar, Reativar) */
+        .btn-action-edit {
+            border: 1px solid #1e3a8a;
+            color: #60a5fa;
+            background: rgba(30, 58, 138, 0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            text-decoration: none;
+            margin-right: 6px;
+        }
+        .btn-action-edit:hover { background: #1e3a8a; color: #fff; text-decoration: none; }
+
+        .btn-action-inactivate {
+            border: 1px solid #78350f;
+            color: #f59e0b;
+            background: rgba(120, 53, 15, 0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-action-inactivate:hover { background: #78350f; color: #fff; text-decoration: none; }
+
+        .btn-action-activate {
+            border: 1px solid #14532d;
+            color: #4ade80;
+            background: rgba(20, 83, 45, 0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            text-decoration: none;
+        }
+        .btn-action-activate:hover { background: #14532d; color: #fff; text-decoration: none; }
+
+        /* =====================================================================
+           4. ESTILOS DOS MODAIS (CADASTRO/EDIÇÃO E INATIVAÇÃO)
+           ===================================================================== */
+        .modal-content-custom {
+            background-color: #0f1728;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .modal-title-custom { font-size: 1.15rem; font-weight: 600; color: #fff; margin: 0; }
+
+        .close-modal-btn { background: none; border: none; color: #64748b; font-size: 1.4rem; cursor: pointer; }
+        .close-modal-btn:hover { color: #fff; }
+
+        .modal-body-custom { padding: 1.5rem; }
+
+        .form-label-custom { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.35rem; display: block; }
+
+        .form-input-custom {
+            background-color: #0b111e;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            color: #fff;
+            width: 100%;
+            padding: 0.55rem 0.8rem;
+            font-size: 0.88rem;
+            outline: none;
+        }
+        .form-input-custom:focus { border-color: #0284c7; }
+
+        .modal-footer-custom {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #1e293b;
+        }
+
+        .btn-modal-cancel {
+            background-color: #1a2538;
+            border: 1px solid #29384f;
+            color: #94a3b8;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+        }
+        .btn-modal-cancel:hover { background-color: #24334a; color: #fff; }
+
+        .btn-modal-save {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.5rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+        .btn-modal-save:hover { background-color: #0369a1; }
+    </style>
+</head>
+<body>
+
+    <!-- =====================================================================
+         1. MENU LATERAL DE NAVEGAÇÃO
+         ===================================================================== -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-box">
+                <div class="brand-icon">
+                    <i class="fas fa-snowflake"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">ClimaOS</h1>
+                    <p class="brand-sub">Gestão de Serviços</p>
+                </div>
+            </div>
+
+            {# Links gerados dinamicamente pelo Django a partir dos names do urls.py #}
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="fas fa-th-large"></i> Painel Geral
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_ordens' %}" class="nav-link">
+                        <i class="fas fa-file-invoice"></i> Ordens de Serviço
+                    </a>
+                </li>
+                <li class="nav-item">
+                    {# 'active' destaca o módulo atual de Clientes #}
+                    <a href="{% url 'listar_clientes' %}" class="nav-link active">
+                        <i class="fas fa-user-friends"></i> Clientes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_equipamentos' %}" class="nav-link">
+                        <i class="fas fa-tv"></i> Equipamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_tecnicos' %}" class="nav-link">
+                        <i class="fas fa-wrench"></i> Equipe Técnica
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'financeiro' %}" class="nav-link">
+                        <i class="fas fa-dollar-sign"></i> Financeiro
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'cadastros_apoio' %}" class="nav-link">
+                        <i class="fas fa-cog"></i> Cadastros de Apoio
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        {# Cartão inferior exibindo o nome, login e perfil do usuário gravados na sessão #}
+        <div class="user-profile">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-circle mr-2">{{ usuario_nome|slice:":2"|upper|default:"CE" }}</div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">{{ usuario_nome }}</div>
+                        <div style="font-size: 0.72rem; color: #64748b;">{{ usuario_login }}</div>
+                    </div>
+                </div>
+                <span class="badge-admin">{{ usuario_tipo }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         2. CONTEÚDO PRINCIPAL DA PÁGINA
+         ===================================================================== -->
+    <main class="main-wrapper">
+        <header class="topbar">
+            <div class="search-global">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar OS, cliente, equipamento...">
+            </div>
+            <div>
+                <button class="notification-btn" title="Notificações">
+                    <i class="far fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-area">
+            {# Cabeçalho da seção com contador vindo do context e botão para abrir o modal de novo cliente #}
+            <div class="header-section">
+                <div>
+                    <h2 class="page-title">Clientes</h2>
+                    <p class="page-subtitle">{{ total_cadastrados }} clientes {% if status_filtro == 'I' %}inativos{% else %}cadastrados{% endif %}</p>
+                </div>
+                <button type="button" class="btn-add-client" onclick="abrirModalNovo()">
+                    <i class="fas fa-plus"></i> Novo Cliente
+                </button>
+            </div>
+
+            {# Exibe alerta vermelho caso o backend rejeite o cadastro (ex: CPF ou CEP inválido) #}
+            {% if erro %}
+            <div class="alert-danger-custom" id="alertaErroCliente">
+                <span><i class="fas fa-exclamation-circle mr-2"></i>{{ erro }}</span>
+                <button type="button" onclick="document.getElementById('alertaErroCliente').style.display='none'">Fechar</button>
+            </div>
+            {% endif %}
+
+            {# Barra de filtro instantâneo em JavaScript e abas Ativos / Inativos #}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <input type="text" class="filter-input" placeholder="Buscar por nome, CPF ou cidade..." id="inputFiltro" onkeyup="filtrarTabela()">
+                
+                <div class="d-flex gap-2">
+                    <a href="{% url 'listar_clientes' %}?status=A" class="status-toggle-btn {% if status_filtro == 'A' %}active{% endif %}">
+                        Ativos
+                    </a>
+                    <a href="{% url 'listar_clientes' %}?status=I" class="status-toggle-btn {% if status_filtro == 'I' %}active{% endif %}">
+                        Inativos
+                    </a>
+                </div>
+            </div>
+
+            {# Tabela principal de listagem de clientes #}
+            <div class="table-responsive">
+                <table class="table-clients" id="tabelaClientes">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>Telefone</th>
+                            <th>E-mail</th>
+                            <th>Cidade / UF</th>
+                            <th class="text-center">OS</th>
+                            <th class="text-center">Equip.</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in clientes %}
+                        <tr>
+                            <td class="client-id">#{{ c.id_cliente }}</td>
+                            <td class="client-name">{{ c.nome }}</td>
+                            <td>{{ c.cpf }}</td>
+                            <td>{{ c.telefone }}</td>
+                            <td>{{ c.email }}</td>
+                            <td>{{ c.cidade }} — {{ c.uf }}</td>
+                            <td class="text-center">{{ c.total_os|default:"0" }}</td>
+                            <td class="text-center">{{ c.total_equip|default:"0" }}</td>
+                            <td class="text-center">
+                                {# Clientes ativos mostram Editar/Inativar; inativos mostram Reativar #}
+                                {% if c.status == 'A' %}
+                                    <a href="javascript:void(0)" class="btn-action-edit" 
+                                       onclick="abrirModalEditar('{{ c.id_cliente }}', '{{ c.nome }}', '{{ c.cpf }}', '{{ c.telefone }}', '{{ c.email }}', '{{ c.endereco }}', '{{ c.cidade }}', '{{ c.uf }}')">
+                                        Editar
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn-action-inactivate" onclick="abrirModalInativar('{{ c.id_cliente }}', '{{ c.nome }}')">
+                                        Inativar
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'ativar_cliente' c.id_cliente %}" class="btn-action-activate" onclick="return confirm('Deseja reativar este cliente?')">
+                                        Reativar
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                Nenhum cliente {% if status_filtro == 'I' %}inativo{% else %}ativo{% endif %} encontrado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         3. MODAL ÚNICO DE CADASTRO (INSERT) E EDIÇÃO (UPDATE) DE CLIENTE
+         ===================================================================== -->
+    <div class="modal fade" id="modalCliente" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header-custom">
+                    <h5 class="modal-title-custom" id="modalTitulo">Novo Cliente</h5>
+                    <button type="button" class="close-modal-btn" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+
+                <form method="POST" action="{% url 'listar_clientes' %}" id="formCliente">
+                    {# Proteção obrigatória do Django contra ataques CSRF #}
+                    {% csrf_token %}
+                    {# Campo oculto: vazio = INSERT; com ID = UPDATE na view listar_clientes #}
+                    <input type="hidden" name="cliente_id" id="modal_cliente_id">
+
+                    <div class="modal-body-custom">
+                        <div class="form-group mb-3">
+                            <label class="form-label-custom">Nome Completo</label>
+                            <input type="text" name="nome" id="modal_nome" class="form-input-custom" required>
+                        </div>
+
+                        <div class="form-row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">CPF</label>
+                                <input type="text" name="cpf" id="modal_cpf" class="form-input-custom" maxlength="14" placeholder="000.000.000-00" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Telefone</label>
+                                <input type="text" name="telefone" id="modal_telefone" class="form-input-custom" placeholder="(65) 99999-9999" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label-custom">E-mail</label>
+                                <input type="email" name="email" id="modal_email" class="form-input-custom" required>
+                            </div>
+                            <div class="col-md-5">
+                                {# Campo auxiliar que aciona a API ViaCEP ao completar 8 dígitos #}
+                                <label class="form-label-custom">CEP <small style="color: #38bdf8;">(auto-preenche)</small></label>
+                                <input type="text" name="cep" id="modal_cep" class="form-input-custom" maxlength="9" placeholder="78000-000">
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label-custom">Endereço</label>
+                            <input type="text" name="endereco" id="modal_endereco" class="form-input-custom" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-8">
+                                <label class="form-label-custom">Cidade</label>
+                                <input type="text" name="cidade" id="modal_cidade" class="form-input-custom" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">UF</label>
+                                <input type="text" name="uf" id="modal_uf" maxlength="2" class="form-input-custom text-uppercase" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer-custom">
+                        <button type="button" class="btn btn-modal-cancel" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-modal-save">Salvar Cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         4. MODAL DE CONFIRMAÇÃO DE INATIVAÇÃO (SOFT DELETE)
+         ===================================================================== -->
+    <div class="modal fade" id="modalConfirmarInativacao" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content modal-content-custom text-center p-4">
+                <div class="mb-3">
+                    <div style="width: 56px; height: 56px; background: rgba(245, 158, 11, 0.15); border: 1px solid #78350f; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.5rem;"></i>
+                    </div>
+                </div>
+                
+                <h5 class="modal-title-custom mb-2">Inativar Cliente</h5>
+                <p style="color: #94a3b8; font-size: 0.88rem; margin-bottom: 1.5rem;">
+                    Tem certeza que deseja inativar <strong id="nomeClienteInativar" style="color: #fff;"></strong>? O registo deixará de surgir nas listagens ativas, mantendo o histórico intacto.
+                </p>
+                
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-modal-cancel mr-2" data-dismiss="modal">Cancelar</button>
+                    <a id="btnConfirmarInativar" href="#" class="btn btn-modal-save" style="background-color: #dc2626; border-color: #b91c1c;">
+                        Confirmar Inativação
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts jQuery e Bootstrap 4.6 para controle dos modais -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* =====================================================================
+           5. MÁSCARA E VALIDAÇÃO MATEMÁTICA DE CPF (FRONTEND)
+           ===================================================================== */
+        function formatarCPFString(valor) {
+            // Remove tudo que não for número, limita a 11 dígitos e aplica 000.000.000-00
+            let v = (valor || '').replace(/\D/g, '').slice(0, 11);
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            return v;
+        }
+
+        function checarCPFValido(cpfStr) {
+            const cpf = (cpfStr || '').replace(/\D/g, '');
+            // Rejeita se não tiver 11 dígitos ou se todos os números forem iguais
+            if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+            // Valida o 1º dígito verificador (pesos de 10 a 2)
+            let soma = 0;
+            for (let i = 0; i < 9; i++) soma += parseInt(cpf.charAt(i)) * (10 - i);
+            let d1 = (soma * 10) % 11;
+            if (d1 === 10) d1 = 0;
+            if (d1 !== parseInt(cpf.charAt(9))) return false;
+
+            // Valida o 2º dígito verificador (pesos de 11 a 2)
+            soma = 0;
+            for (let i = 0; i < 10; i++) soma += parseInt(cpf.charAt(i)) * (11 - i);
+            let d2 = (soma * 10) % 11;
+            if (d2 === 10) d2 = 0;
+            return d2 === parseInt(cpf.charAt(10));
+        }
+
+        const inputCPF = document.getElementById('modal_cpf');
+        const inputCEP = document.getElementById('modal_cep');
+
+        // Formata o CPF em tempo real enquanto o usuário digita
+        inputCPF.addEventListener('input', function () {
+            this.value = formatarCPFString(this.value);
+            this.setCustomValidity('');
+        });
+
+        // Ao sair do campo CPF (blur), exibe balão nativo de erro se o dígito verificador falhar
+        inputCPF.addEventListener('blur', function () {
+            if (this.value && !checarCPFValido(this.value)) {
+                this.setCustomValidity('CPF inválido. Verifique os dígitos informados.');
+                this.reportValidity();
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        /* =====================================================================
+           6. MÁSCARA DE CEP E INTEGRAÇÃO COM A API VIACEP (AUTO-PREENCHIMENTO)
+           ===================================================================== */
+        inputCEP.addEventListener('input', function () {
+            // Formata o CEP como 00000-000
+            let v = this.value.replace(/\D/g, '').slice(0, 8);
+            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+            this.value = v;
+            this.setCustomValidity('');
+
+            // Quando atingir 8 dígitos numéricos, consulta a API pública do ViaCEP
+            const cepLimpo = v.replace(/\D/g, '');
+            if (cepLimpo.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+                    .then(r => r.json())
+                    .then(dados => {
+                        if (dados.erro) {
+                            // CEP inexistente na base dos Correios
+                            inputCEP.setCustomValidity('CEP não encontrado.');
+                            inputCEP.reportValidity();
+                        } else {
+                            // Preenche automaticamente Endereço (Rua + Bairro), Cidade e UF
+                            if (dados.logradouro) {
+                                const endCompleto = dados.bairro ? `${dados.logradouro}, ${dados.bairro}` : dados.logradouro;
+                                document.getElementById('modal_endereco').value = endCompleto;
+                            }
+                            if (dados.localidade) document.getElementById('modal_cidade').value = dados.localidade;
+                            if (dados.uf) document.getElementById('modal_uf').value = dados.uf;
+                        }
+                    })
+                    .catch(() => {}); // Falha silenciosa caso esteja sem internet
+            }
+        });
+
+        // Validação final antes de enviar o formulário (submit)
+        document.getElementById('formCliente').addEventListener('submit', function (e) {
+            if (!checarCPFValido(inputCPF.value)) {
+                e.preventDefault(); // Impede o envio do formulário
+                inputCPF.setCustomValidity('CPF inválido. Verifique os dígitos informados.');
+                inputCPF.reportValidity();
+                return;
+            }
+            const cepLimpo = inputCEP.value.replace(/\D/g, '');
+            if (cepLimpo.length > 0 && cepLimpo.length !== 8) {
+                e.preventDefault();
+                inputCEP.setCustomValidity('O CEP deve conter 8 dígitos.');
+                inputCEP.reportValidity();
+            }
+        });
+
+        /* =====================================================================
+           7. FUNÇÕES DE ABERTURA DOS MODAIS E FILTRO RÁPIDO DA TABELA
+           ===================================================================== */
+        function abrirModalNovo() {
+            document.getElementById('modalTitulo').innerText = 'Novo Cliente';
+            document.getElementById('modal_cliente_id').value = ''; // Limpa ID para criar novo registro
+            document.getElementById('modal_nome').value = '';
+            document.getElementById('modal_cpf').value = '';
+            document.getElementById('modal_cpf').setCustomValidity('');
+            document.getElementById('modal_cep').value = '';
+            document.getElementById('modal_cep').setCustomValidity('');
+            document.getElementById('modal_telefone').value = '';
+            document.getElementById('modal_email').value = '';
+            document.getElementById('modal_endereco').value = '';
+            document.getElementById('modal_cidade').value = '';
+            document.getElementById('modal_uf').value = '';
+            $('#modalCliente').modal('show');
+        }
+
+        function abrirModalEditar(id, nome, cpf, telefone, email, endereco, cidade, uf) {
+            document.getElementById('modalTitulo').innerText = 'Editar Cliente #' + id;
+            document.getElementById('modal_cliente_id').value = id; // Preenche ID para atualizar registro existente
+            document.getElementById('modal_nome').value = nome;
+            document.getElementById('modal_cpf').value = formatarCPFString(cpf);
+            document.getElementById('modal_cpf').setCustomValidity('');
+            document.getElementById('modal_cep').value = '';
+            document.getElementById('modal_cep').setCustomValidity('');
+            document.getElementById('modal_telefone').value = telefone;
+            document.getElementById('modal_email').value = email;
+            document.getElementById('modal_endereco').value = endereco;
+            document.getElementById('modal_cidade').value = cidade;
+            document.getElementById('modal_uf').value = uf;
+            $('#modalCliente').modal('show');
+        }
+
+        function abrirModalInativar(id, nome) {
+            document.getElementById('nomeClienteInativar').innerText = nome;
+            document.getElementById('btnConfirmarInativar').href = '/clientes/inativar/' + id + '/';
+            $('#modalConfirmarInativacao').modal('show');
+        }
+
+        // Filtra as linhas da tabela em tempo real conforme o usuário digita no campo de busca
+        function filtrarTabela() {
+            var input = document.getElementById("inputFiltro");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tabelaClientes");
+            var tr = table.getElementsByTagName("tr");
+
+            // Começa em i = 1 para pular o cabeçalho (<thead>)
+            for (var i = 1; i < tr.length; i++) {
+                var textoLinha = tr[i].innerText.toLowerCase();
+                if (textoLinha.indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Geral - ClimaOS</title>
+
+    <!-- Bootstrap 4.6 (grid, dropdowns e modais) e FontAwesome (ícones) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* =====================================================================
+           1. VARIÁVEIS DE CORES E LAYOUT BASE (DARK UI)
+           ===================================================================== */
+        :root {
+            --bg-body: #070d18;
+            --bg-sidebar: #090d15;
+            --bg-card: #0b1322;
+            --bg-input: #0e1729;
+            --border-color: #162235;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --primary-blue: #0284c7;
+            --primary-hover: #0369a1;
+        }
+
+        /* Trava a altura da viewport em 100vh para manter a sidebar fixa enquanto o conteúdo rola */
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* =====================================================================
+           2. BARRA LATERAL FIXA (SIDEBAR)
+           ===================================================================== */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.1; }
+        .brand-sub { font-size: 0.72rem; color: var(--text-muted); margin: 0; }
+
+        .nav-list { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 0.35rem; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: #fff; background-color: rgba(255, 255, 255, 0.04); text-decoration: none; }
+        .nav-link.active { color: #38bdf8; background-color: rgba(2, 132, 199, 0.15); font-weight: 500; }
+
+        /* Cartão de perfil do usuário autenticado na base da sidebar */
+        .user-profile {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge-admin {
+            background-color: #6366f1;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background-color: #131c2d;
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            padding: 0.4rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+        .btn-logout:hover { color: #ef4444; background-color: #1c2230; text-decoration: none; }
+
+        /* =====================================================================
+           3. ÁREA PRINCIPAL E TOPBAR (BUSCA GLOBAL, SINO E "+ NOVA OS")
+           ===================================================================== */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            height: 68px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .global-search { position: relative; width: 380px; }
+        .global-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 0.85rem; }
+        .global-search input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem 0.5rem 2.3rem;
+            color: #fff;
+            font-size: 0.86rem;
+            outline: none;
+        }
+        .global-search input:focus { border-color: var(--primary-blue); }
+
+        .topbar-actions { display: flex; align-items: center; gap: 14px; }
+
+        .btn-bell {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .btn-bell:hover { color: #fff; border-color: #263854; }
+        .bell-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #f59e0b;
+            color: #070d18;
+            font-size: 0.65rem;
+            font-weight: 700;
+            min-width: 17px;
+            height: 17px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .btn-nova-os {
+            background-color: var(--primary-blue);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 0.5rem 1.15rem;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-nova-os:hover { background-color: var(--primary-hover); color: #fff; }
+
+        .content-area { padding: 2rem 2.5rem; }
+        .page-title { font-size: 1.55rem; font-weight: 600; margin: 0; color: #fff; }
+        .page-subtitle { font-size: 0.85rem; color: #64748b; margin-top: 4px; margin-bottom: 1.6rem; }
+
+        /* =====================================================================
+           4. GRADE DE 4 CARDS DE INDICADORES (KPIs)
+           ===================================================================== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.6rem;
+        }
+
+        @media (max-width: 1200px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .kpi-card {
+            background-color: #0b1322;
+            border: 1px solid #162235;
+            border-radius: 12px;
+            padding: 1.35rem 1.4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.84rem;
+            color: #94a3b8;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-slate { background-color: #64748b; }
+        .dot-amber { background-color: #f59e0b; }
+        .dot-cyan { background-color: #0ea5e9; }
+        .dot-emerald { background-color: #10b981; }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.15;
+            margin-bottom: 0.55rem;
+        }
+        .val-slate { color: #94a3b8; }
+        .val-amber { color: #f59e0b; }
+        .val-cyan { color: #0ea5e9; }
+        .val-emerald { color: #10b981; }
+
+        .kpi-sub { font-size: 0.78rem; color: #64748b; margin-bottom: 0.85rem; }
+
+        .kpi-progress {
+            width: 100%;
+            height: 3px;
+            background-color: #162235;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .kpi-progress-bar { height: 100%; border-radius: 999px; }
+        .bar-slate { background-color: #64748b; }
+        .bar-amber { background-color: #f59e0b; }
+        .bar-cyan { background-color: #0ea5e9; }
+        .bar-emerald { background-color: #10b981; }
+
+        /* =====================================================================
+           5. GRADE INFERIOR (TABELA OS RECENTES + AGENDA DE HOJE)
+           ===================================================================== */
+        .dashboard-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1.4rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1150px) {
+            .dashboard-bottom-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel-card {
+            background-color: #0b1322;
+            border: 1px solid #162235;
+            border-radius: 12px;
+            padding: 1.4rem;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.1rem;
+        }
+
+        .panel-title { font-size: 1.05rem; font-weight: 600; color: #f1f5f9; margin: 0; }
+        .link-ver-todas { font-size: 0.84rem; color: #0ea5e9; text-decoration: none; font-weight: 500; }
+        .link-ver-todas:hover { color: #38bdf8; text-decoration: none; }
+
+        /* Tabela compacta das últimas 10 OS */
+        .table-dash-wrap { overflow-x: auto; }
+        .table-dash {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        .table-dash th {
+            text-align: left;
+            padding: 0.75rem 0.75rem;
+            color: #475569;
+            font-size: 0.76rem;
+            font-weight: 600;
+            border-bottom: 1px solid #131d2e;
+            white-space: nowrap;
+        }
+        .table-dash td {
+            padding: 0.9rem 0.75rem;
+            border-bottom: 1px solid #131d2e;
+            vertical-align: middle;
+        }
+        .table-dash tr:last-child td { border-bottom: none; }
+
+        .os-id-link { color: #0ea5e9; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .os-id-link:hover { color: #38bdf8; text-decoration: underline; }
+
+        .cli-name { color: #f1f5f9; font-weight: 600; line-height: 1.25; }
+        .cli-city { color: #64748b; font-size: 0.76rem; margin-top: 2px; }
+
+        /* Badges de status operacional e pagamento */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 11px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        .badge-status .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .status-AB { background-color: rgba(148, 163, 184, 0.12); border: 1px solid rgba(148, 163, 184, 0.25); color: #cbd5e1; }
+        .status-AB .dot { background-color: #94a3b8; }
+        .status-AG { background-color: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; }
+        .status-AG .dot { background-color: #f59e0b; }
+        .status-EA { background-color: rgba(14, 165, 233, 0.14); border: 1px solid rgba(14, 165, 233, 0.35); color: #38bdf8; }
+        .status-EA .dot { background-color: #0ea5e9; }
+        .status-FN { background-color: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; }
+        .status-FN .dot { background-color: #10b981; }
+
+        .badge-pgto-S {
+            display: inline-block;
+            background-color: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+        .badge-pgto-N {
+            display: inline-block;
+            background-color: rgba(239, 68, 68, 0.16);
+            color: #f87171;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+
+        .btn-ver-os {
+            border: 1px solid #1a2942;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+            padding: 4px 12px;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-ver-os:hover { background-color: #0284c7; border-color: #0284c7; color: #fff; }
+
+        /* Cartões da Agenda de Hoje (coluna da direita) */
+        .agenda-date-sub { font-size: 0.8rem; color: #64748b; margin-top: 2px; margin-bottom: 1rem; }
+
+        .agenda-item-card {
+            background-color: #080e1a;
+            border: 1px solid #162438;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.85rem;
+            transition: border-color 0.2s;
+        }
+        .agenda-item-card:hover { border-color: #243958; }
+        .agenda-item-card:last-child { margin-bottom: 0; }
+
+        .agenda-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.55rem;
+        }
+
+        .agenda-time-pill {
+            background-color: rgba(14, 165, 233, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            padding: 2px 9px;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .agenda-client { font-size: 0.9rem; font-weight: 600; color: #f1f5f9; }
+        .agenda-city { font-size: 0.76rem; color: #64748b; margin-bottom: 0.8rem; }
+
+        .agenda-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tec-mini { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #94a3b8; }
+        .tec-mini-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #162438;
+            color: #38bdf8;
+            font-size: 0.68rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .agenda-status-pill {
+            padding: 2px 9px;
+            border-radius: 5px;
+            font-size: 0.73rem;
+            font-weight: 500;
+        }
+        .ag-pill-AG { background-color: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; }
+        .ag-pill-EA { background-color: rgba(14, 165, 233, 0.14); border: 1px solid rgba(14, 165, 233, 0.35); color: #38bdf8; }
+        .ag-pill-FN { background-color: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; }
+        .ag-pill-AB { background-color: rgba(148, 163, 184, 0.12); border: 1px solid rgba(148, 163, 184, 0.25); color: #cbd5e1; }
+
+        /* =====================================================================
+           6. ESTILOS DOS MODAIS (VISUALIZAR OS E ATALHO "+ NOVA OS")
+           ===================================================================== */
+        .modal-content-figma {
+            background-color: #0b1322;
+            border: 1px solid #162438;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+        }
+
+        .modal-header-figma {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1.35rem 1.7rem 1rem;
+            border-bottom: 1px solid #131d2e;
+        }
+
+        .modal-title-figma { font-size: 1.15rem; font-weight: 600; color: #fff; margin: 0; }
+        .modal-subtitle-figma { font-size: 0.82rem; color: #64748b; margin-top: 3px; }
+
+        .btn-fechar-modal {
+            background-color: #162033;
+            border: 1px solid #22304a;
+            color: #cbd5e1;
+            border-radius: 6px;
+            padding: 5px 14px;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+        .btn-fechar-modal:hover { background-color: #1e2c46; color: #fff; }
+
+        .detail-box {
+            background-color: #080e1a;
+            border: 1px solid #162438;
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            margin-bottom: 0.9rem;
+        }
+        .detail-label { font-size: 0.74rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+        .detail-val { font-size: 0.9rem; color: #f1f5f9; font-weight: 500; }
+
+        .btn-figma-nav {
+            background-color: #131d2e;
+            border: 1px solid #1e2c44;
+            color: #cbd5e1;
+            padding: 0.5rem 1.15rem;
+            border-radius: 6px;
+            font-size: 0.86rem;
+            cursor: pointer;
+        }
+        .btn-figma-nav:hover:not(:disabled) { background-color: #1b283f; color: #fff; }
+        .btn-figma-nav:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .btn-figma-save {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.52rem 1.35rem;
+            border-radius: 6px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-figma-save:hover { background-color: #0369a1; color: #fff; text-decoration: none; }
+
+        /* Abas internas do modal "+ Nova OS" */
+        .modal-tabs {
+            display: flex;
+            gap: 1.6rem;
+            padding: 0 1.7rem;
+            border-bottom: 1px solid #131d2e;
+            background-color: #09101d;
+        }
+        .modal-tab-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 0.86rem;
+            font-weight: 500;
+            padding: 0.85rem 0.2rem;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+        }
+        .modal-tab-btn.active { color: #38bdf8; }
+        .modal-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #0284c7;
+        }
+        .modal-body-figma { padding: 1.5rem 1.7rem; min-height: 320px; }
+        .section-heading-figma {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid #131d2e;
+            margin-bottom: 1.2rem;
+        }
+        .form-label-figma { font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.4rem; display: block; }
+        .form-input-figma {
+            background-color: #070d18;
+            border: 1px solid #1a2840;
+            border-radius: 6px;
+            color: #fff;
+            width: 100%;
+            padding: 0.58rem 0.85rem;
+            font-size: 0.88rem;
+            outline: none;
+        }
+        .form-input-figma:focus { border-color: #0284c7; }
+        .selectable-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .selectable-card {
+            background-color: #080e1a;
+            border: 1px solid #162438;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            margin: 0;
+        }
+        .modal-footer-figma {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.7rem 1.35rem;
+            border-top: 1px solid #131d2e;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =====================================================================
+         1. BARRA LATERAL FIXA
+         ===================================================================== -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-box">
+                <div class="brand-icon"><i class="fas fa-snowflake"></i></div>
+                <div>
+                    <h1 class="brand-title">ClimaOS</h1>
+                    <p class="brand-sub">Gestão de Serviços</p>
+                </div>
+            </div>
+
+            {# Links das rotas principais do sistema #}
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link active">
+                        <i class="fas fa-th-large"></i> Painel Geral
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_ordens' %}" class="nav-link">
+                        <i class="fas fa-file-invoice"></i> Ordens de Serviço
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_clientes' %}" class="nav-link">
+                        <i class="fas fa-user-friends"></i> Clientes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_equipamentos' %}" class="nav-link">
+                        <i class="fas fa-tv"></i> Equipamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_tecnicos' %}" class="nav-link">
+                        <i class="fas fa-wrench"></i> Equipe Técnica
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'financeiro' %}" class="nav-link">
+                        <i class="fas fa-dollar-sign"></i> Financeiro
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'cadastros_apoio' %}" class="nav-link">
+                        <i class="fas fa-cog"></i> Cadastros de Apoio
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        {# Perfil do usuário logado na sessão #}
+        <div class="user-profile">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle mr-2">{{ usuario_nome|slice:":2"|upper|default:"CE" }}</div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">{{ usuario_nome }}</div>
+                        <div style="font-size: 0.72rem; color: #64748b;">{{ usuario_login }}</div>
+                    </div>
+                </div>
+                <span class="badge-admin">{{ usuario_tipo }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         2. CONTEÚDO PRINCIPAL DO DASHBOARD
+         ===================================================================== -->
+    <main class="main-wrapper">
+        <!-- Barra superior: busca global redireciona para /ordens/?q=... -->
+        <header class="topbar">
+            <form method="GET" action="{% url 'listar_ordens' %}" class="global-search">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" placeholder="Buscar OS, cliente, equipamento...">
+            </form>
+
+            <div class="topbar-actions">
+                {# Dropdown do sino de notificações com resumo de pendências do dia #}
+                <div class="dropdown">
+                    <button class="btn-bell" type="button" data-toggle="dropdown" aria-expanded="false" title="Notificações">
+                        <i class="far fa-bell"></i>
+                        {% if total_notificacoes > 0 %}
+                        <span class="bell-badge">{{ total_notificacoes }}</span>
+                        {% endif %}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" style="background-color: #0b1322; border: 1px solid #162438; min-width: 270px; padding: 0.75rem;">
+                        <div style="font-size: 0.8rem; font-weight: 600; color: #f1f5f9; border-bottom: 1px solid #162438; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                            Resumo Operacional
+                        </div>
+                        <a href="{% url 'listar_ordens' %}?status=AB" class="d-block py-1" style="font-size: 0.82rem; color: #94a3b8; text-decoration: none;">
+                            • {{ os_abertas }} OS aguardando agendamento
+                        </a>
+                        <a href="{% url 'listar_ordens' %}?status=AG" class="d-block py-1" style="font-size: 0.82rem; color: #fbbf24; text-decoration: none;">
+                            • {{ agendadas_hoje }} visita(s) agendada(s) para hoje
+                        </a>
+                    </div>
+                </div>
+
+                {# Botão de atalho que abre o modal de criação de OS sem sair do Painel Geral #}
+                <button type="button" class="btn-nova-os" onclick="abrirModalNovaOSDash()">
+                    + Nova OS
+                </button>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <h2 class="page-title">Painel Geral</h2>
+            {# Data atual formatada por extenso no views.py #}
+            <p class="page-subtitle">{{ data_extenso }}</p>
+
+            <!-- ===============================================================
+                 4 CARDS DE INDICADORES (KPIs)
+                 =============================================================== -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>OS Abertas</span>
+                        <span class="kpi-dot dot-slate"></span>
+                    </div>
+                    <div class="kpi-value val-slate">{{ os_abertas }}</div>
+                    <div class="kpi-sub">Aguardando agendamento</div>
+                    <div class="kpi-progress">
+                        {# O atributo data-width é lido pelo JS no final para definir o width em % #}
+                        <div class="kpi-progress-bar bar-slate" data-width="{{ pct_abertas }}"></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>OS Agendadas Hoje</span>
+                        <span class="kpi-dot dot-amber"></span>
+                    </div>
+                    <div class="kpi-value val-amber">{{ agendadas_hoje }}</div>
+                    <div class="kpi-sub">{{ total_agendadas }} total agendadas</div>
+                    <div class="kpi-progress">
+                        <div class="kpi-progress-bar bar-amber" data-width="{{ pct_agendadas }}"></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>OS Em Andamento</span>
+                        <span class="kpi-dot dot-cyan"></span>
+                    </div>
+                    <div class="kpi-value val-cyan">{{ em_andamento }}</div>
+                    <div class="kpi-sub">Técnicos em campo</div>
+                    <div class="kpi-progress">
+                        <div class="kpi-progress-bar bar-cyan" data-width="{{ pct_andamento }}"></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>Receita do Mês</span>
+                        <span class="kpi-dot dot-emerald"></span>
+                    </div>
+                    <div class="kpi-value val-emerald">R$ {{ receita_mes|floatformat:2 }}</div>
+                    <div class="kpi-sub">{{ mes_ano_label }} — pagas</div>
+                    <div class="kpi-progress">
+                        <div class="kpi-progress-bar bar-emerald" data-width="{{ pct_receita }}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===============================================================
+                 GRADE INFERIOR: ORDENS RECENTES (ESQUERDA) + AGENDA DE HOJE (DIREITA)
+                 =============================================================== -->
+            <div class="dashboard-bottom-grid">
+                <!-- Coluna Esquerda: Tabela das últimas 10 OS -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Ordens de Serviço Recentes</h3>
+                        <a href="{% url 'listar_ordens' %}" class="link-ver-todas">Ver todas →</a>
+                    </div>
+
+                    <div class="table-dash-wrap">
+                        <table class="table-dash">
+                            <thead>
+                                <tr>
+                                    <th>OS</th>
+                                    <th>Cliente</th>
+                                    <th>Visita</th>
+                                    <th class="text-center">Equip.</th>
+                                    <th>Técnico</th>
+                                    <th>Status</th>
+                                    <th>Pgto</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for o in ordens_recentes %}
+                                <tr>
+                                    <td>
+                                        {# Clicar no número da OS aciona o mesmo modal do botão "Ver" da linha #}
+                                        <span class="os-id-link" onclick="abrirModalVisualizarOS(this.closest('tr').querySelector('.btn-ver-os'))">
+                                            #{{ o.id_os }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="cli-name">{{ o.cliente_nome }}</div>
+                                        {% if o.cliente_cidade %}
+                                        <div class="cli-city">{{ o.cliente_cidade }} — {{ o.cliente_uf }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if o.dt_visita %}
+                                            <div>{{ o.dt_visita|date:"d/m/Y" }}</div>
+                                            {% if o.hr_visita %}
+                                            <div style="font-size: 0.76rem; color: #64748b;">{{ o.hr_visita|time:"H:i" }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ o.total_equip }}</td>
+                                    <td>{{ o.tecnico_responsavel|default:"—" }}</td>
+                                    <td>
+                                        {% if o.status == 'AB' %}
+                                            <span class="badge-status status-AB"><span class="dot"></span>Aberto</span>
+                                        {% elif o.status == 'AG' %}
+                                            <span class="badge-status status-AG"><span class="dot"></span>Agendado</span>
+                                        {% elif o.status == 'EA' %}
+                                            <span class="badge-status status-EA"><span class="dot"></span>Em Andamento</span>
+                                        {% elif o.status == 'FN' %}
+                                            <span class="badge-status status-FN"><span class="dot"></span>Finalizado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if o.pago == 'S' %}
+                                            <span class="badge-pgto-S">Pago</span>
+                                        {% else %}
+                                            <span class="badge-pgto-N">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-right">
+                                        {# Atributos data-* armazenam todos os dados da OS para o modal "Ver" ler instantaneamente #}
+                                        <button type="button" class="btn-ver-os"
+                                                data-id="{{ o.id_os }}"
+                                                data-abertura="{{ o.dt_abertura_os|date:'d/m/Y' }}"
+                                                data-visita="{% if o.dt_visita %}{{ o.dt_visita|date:'d/m/Y' }}{% if o.hr_visita %} às {{ o.hr_visita|time:'H:i' }}{% endif %}{% else %}Não agendada{% endif %}"
+                                                data-fim="{% if o.dt_fim_os %}{{ o.dt_fim_os|date:'d/m/Y' }}{% else %}—{% endif %}"
+                                                data-status="{{ o.status }}"
+                                                data-cliente="{{ o.cliente_nome }}"
+                                                data-local="{% if o.cliente_cidade %}{{ o.cliente_cidade }} — {{ o.cliente_uf }}{% endif %}"
+                                                data-endereco="{{ o.cliente_endereco|default:'Não informado' }}"
+                                                data-telefone="{{ o.cliente_telefone|default:'Não informado' }}"
+                                                data-descricao="{{ o.descricao|default:'Sem descrição registrada.' }}"
+                                                data-valor="R$ {{ o.vlr_total|floatformat:2 }}"
+                                                data-forma="{{ o.forma_pagto_nome|default:'Não informada' }}"
+                                                data-pago="{{ o.pago }}"
+                                                onclick="abrirModalVisualizarOS(this)">
+                                            Ver
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        Nenhuma Ordem de Serviço registrada até o momento.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Visitas agendadas para o dia atual -->
+                <div class="panel-card">
+                    <h3 class="panel-title">Agenda de Hoje</h3>
+                    <div class="agenda-date-sub">{{ hoje|date:"d/m/Y" }}</div>
+
+                    {% for ag in agenda_hoje %}
+                    <div class="agenda-item-card">
+                        <div class="agenda-top">
+                            <span style="color: #0ea5e9; font-weight: 600; font-size: 0.9rem;">#{{ ag.id_os }}</span>
+                            <span class="agenda-time-pill">
+                                {% if ag.hr_visita %}{{ ag.hr_visita|time:"H:i" }}{% else %}--:--{% endif %}
+                            </span>
+                        </div>
+                        <div class="agenda-client">{{ ag.cliente_nome }}</div>
+                        <div class="agenda-city">
+                            {% if ag.cliente_cidade %}{{ ag.cliente_cidade }} — {{ ag.cliente_uf }}{% else %}Local não informado{% endif %}
+                        </div>
+
+                        <div class="agenda-footer">
+                            <div class="tec-mini">
+                                <span class="tec-mini-avatar">{{ ag.tecnico_iniciais }}</span>
+                                <span>{{ ag.tecnico_primeiro_nome }}</span>
+                            </div>
+
+                            {% if ag.status == 'AG' %}
+                                <span class="agenda-status-pill ag-pill-AG">Agendado</span>
+                            {% elif ag.status == 'EA' %}
+                                <span class="agenda-status-pill ag-pill-EA">Em Andamento</span>
+                            {% elif ag.status == 'FN' %}
+                                <span class="agenda-status-pill ag-pill-FN">Finalizado</span>
+                            {% else %}
+                                <span class="agenda-status-pill ag-pill-AB">Aberto</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4" style="color: #64748b; font-size: 0.85rem;">
+                        Nenhuma visita agendada para hoje.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         3. MODAL DE VISUALIZAÇÃO RÁPIDA DA OS (ACIONADO PELO BOTÃO "VER")
+         ===================================================================== -->
+    <div class="modal fade" id="modalVisualizarOS" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 680px;">
+            <div class="modal-content modal-content-figma">
+                <div class="modal-header-figma">
+                    <div>
+                        <div class="d-flex align-items-center" style="gap: 10px;">
+                            <h5 class="modal-title-figma" id="verOSTitulo">Ordem de Serviço #1001</h5>
+                            <span id="verOSStatusBadge"></span>
+                        </div>
+                        <div class="modal-subtitle-figma" id="verOSSubtitulo">Abertura: --/--/----</div>
+                    </div>
+                    <button type="button" class="btn-fechar-modal" data-dismiss="modal">Fechar</button>
+                </div>
+
+                <div class="p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <div class="detail-label">Cliente</div>
+                                <div class="detail-val" id="verOSCliente">—</div>
+                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;" id="verOSLocal">—</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <div class="detail-label">Visita Agendada</div>
+                                <div class="detail-val" id="verOSVisita">—</div>
+                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;" id="verOSFim">Finalização: —</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-box">
+                        <div class="detail-label">Descrição do Serviço</div>
+                        <div style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5;" id="verOSDescricao">—</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-box" style="min-height: 110px;">
+                                <div class="detail-label">Equipamentos Vinculados</div>
+                                <div id="verOSEquipamentos" style="font-size: 0.84rem; color: #cbd5e1;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-box" style="min-height: 110px;">
+                                <div class="detail-label">Equipe Técnica</div>
+                                <div id="verOSTecnicos" style="font-size: 0.84rem; color: #cbd5e1;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-box mb-0 d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="detail-label">Valor Total / Forma de Pagamento</div>
+                            <div class="detail-val">
+                                <span id="verOSValor">R$ 0,00</span>
+                                <span style="color: #64748b; font-weight: 400; font-size: 0.82rem;" id="verOSForma"> • Não informada</span>
+                            </div>
+                        </div>
+                        <div id="verOSPagoBadge"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer-figma">
+                    <button type="button" class="btn-figma-nav" data-dismiss="modal">Fechar</button>
+                    <a id="btnIrParaEditarOS" href="{% url 'listar_ordens' %}" class="btn-figma-save">
+                        Gerenciar na tela de OS →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         4. MODAL DE CRIAÇÃO RÁPIDA DE OS (5 ABAS) — ENVIA POST PARA listar_ordens
+         ===================================================================== -->
+    <div class="modal fade" id="modalNovaOSDash" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 760px;">
+            <div class="modal-content modal-content-figma">
+                <div class="modal-header-figma">
+                    <div>
+                        <h5 class="modal-title-figma">Incluir nova Ordem de Serviço (OS)</h5>
+                        <div class="modal-subtitle-figma">Preencha os dados e vínculos obrigatórios.</div>
+                    </div>
+                    <button type="button" class="btn-fechar-modal" data-dismiss="modal">Fechar</button>
+                </div>
+
+                {# Barra de navegação das 5 etapas do cadastro da OS #}
+                <div class="modal-tabs">
+                    <button type="button" class="modal-tab-btn active" onclick="irParaAbaDash(0)">Dados da OS</button>
+                    <button type="button" class="modal-tab-btn" onclick="irParaAbaDash(1)">Cliente</button>
+                    <button type="button" class="modal-tab-btn" onclick="irParaAbaDash(2)">Equipe</button>
+                    <button type="button" class="modal-tab-btn" onclick="irParaAbaDash(3)">Equipamentos</button>
+                    <button type="button" class="modal-tab-btn" onclick="irParaAbaDash(4)">Pagamento</button>
+                </div>
+
+                {# Envia os dados direto para a rota 'listar_ordens', que executa o INSERT no PostgreSQL #}
+                <form method="POST" action="{% url 'listar_ordens' %}">
+                    {% csrf_token %}
+                    <div class="modal-body-figma">
+                        <!-- Aba 0: Dados gerais -->
+                        <div class="dash-step-pane" id="dash-step-0">
+                            <div class="section-heading-figma">Dados gerais da Ordem de Serviço (OS)</div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Número da OS</label>
+                                    <input type="text" class="form-input-figma" value="Gerado ao salvar" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Status</label>
+                                    <select name="status" class="form-input-figma">
+                                        <option value="AB">AB — Aberto</option>
+                                        <option value="AG">AG — Agendado</option>
+                                        <option value="EA">EA — Em Andamento</option>
+                                        <option value="FN">FN — Finalizado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Data de abertura</label>
+                                    <input type="date" name="dt_abertura_os" class="form-input-figma" value="{{ hoje_iso }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Data da visita</label>
+                                    <input type="date" name="dt_visita" class="form-input-figma">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Horário da visita</label>
+                                    <input type="time" name="hr_visita" class="form-input-figma">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Data de finalização</label>
+                                    <input type="date" name="dt_fim_os" class="form-input-figma">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label-figma">Descrição do serviço</label>
+                                    <textarea name="descricao" rows="3" class="form-input-figma" placeholder="Descreva o serviço solicitado..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aba 1: Seleção do cliente (ao mudar, filtra os equipamentos da Aba 3) -->
+                        <div class="dash-step-pane d-none" id="dash-step-1">
+                            <div class="section-heading-figma">Cliente da OS</div>
+                            <div class="form-group">
+                                <label class="form-label-figma">Cliente</label>
+                                <select name="id_cliente" id="dash_id_cliente" class="form-input-figma" required onchange="renderEquipamentosDash()">
+                                    <option value="">Selecione um cliente</option>
+                                    {% for c in clientes_select %}
+                                    <option value="{{ c.id_cliente }}">{{ c.nome }}{% if c.cidade %} ({{ c.cidade }} — {{ c.uf }}){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Aba 2: Seleção dos técnicos -->
+                        <div class="dash-step-pane d-none" id="dash-step-2">
+                            <div class="section-heading-figma">Adicionar técnicos à OS</div>
+                            <div class="selectable-grid">
+                                {% for t in tecnicos_select %}
+                                <label class="selectable-card">
+                                    <input type="checkbox" name="tecnicos" value="{{ t.id_tecnico }}">
+                                    <div>
+                                        <div style="font-size: 0.9rem; font-weight: 600; color: #f1f5f9;">{{ t.nome }}</div>
+                                        <div style="font-size: 0.76rem; color: #64748b;">Equipe técnica</div>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Aba 3: Equipamentos do cliente selecionado (preenchido via JavaScript) -->
+                        <div class="dash-step-pane d-none" id="dash-step-3">
+                            <div class="section-heading-figma">Adicionar equipamentos do cliente à OS</div>
+                            <div id="dashContainerEquip">
+                                <div style="color: #f59e0b; font-size: 0.9rem;">Selecione primeiro um cliente.</div>
+                            </div>
+                        </div>
+
+                        <!-- Aba 4: Valor, forma e situação do pagamento -->
+                        <div class="dash-step-pane d-none" id="dash-step-4">
+                            <div class="section-heading-figma">Fechamento e pagamento</div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Valor total (R$)</label>
+                                    <input type="text" name="vlr_total" class="form-input-figma" placeholder="0,00">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-figma">Forma de pagamento</label>
+                                    <select name="id_forma_pagto" class="form-input-figma">
+                                        <option value="">Selecione</option>
+                                        {% for fp in formas_pgto_select %}
+                                        <option value="{{ fp.id_forma_pagto }}">{{ fp.descricao }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <label class="form-label-figma">Pagamento</label>
+                                    <div class="d-flex align-items-center" style="gap: 24px;">
+                                        <label class="d-flex align-items-center m-0" style="gap: 8px; cursor: pointer; color: #f87171; font-size: 0.9rem;">
+                                            <input type="radio" name="pago" value="N" checked> N — Pendente
+                                        </label>
+                                        <label class="d-flex align-items-center m-0" style="gap: 8px; cursor: pointer; color: #34d399; font-size: 0.9rem;">
+                                            <input type="radio" name="pago" value="S"> S — Pago
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer-figma">
+                        <div class="d-flex" style="gap: 8px;">
+                            <button type="button" class="btn-figma-nav" id="dashBtnAnt" onclick="mudarAbaDash(-1)" disabled>Anterior</button>
+                            <button type="button" class="btn-figma-nav" id="dashBtnProx" onclick="mudarAbaDash(1)">Próximo</button>
+                        </div>
+                        <div class="d-flex" style="gap: 10px;">
+                            <button type="button" class="btn-figma-nav" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn-figma-save">Salvar OS</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts jQuery e Bootstrap 4.6 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {# Blocos JSON seguros injetados pelo Python (views.py) para o JavaScript consumir sem fazer requisições extras #}
+    <script id="json-equip-detalhes" type="application/json">{{ os_equip_detalhes_json|safe }}</script>
+    <script id="json-tec-detalhes" type="application/json">{{ os_tecnicos_detalhes_json|safe }}</script>
+    <script id="json-equip-lista" type="application/json">{{ equipamentos_json|safe }}</script>
+
+    <script>
+        /* =====================================================================
+           5. INICIALIZAÇÃO DAS BARRAS DE PROGRESSO E PARSE DOS DADOS JSON
+           ===================================================================== */
+        // Aplica a largura percentual nas barras inferiores dos 4 cards de KPI
+        document.querySelectorAll('.kpi-progress-bar').forEach(bar => {
+            bar.style.width = (bar.getAttribute('data-width') || 0) + '%';
+        });
+
+        // Converte os textos JSON das tags <script> acima em objetos/arrays JavaScript nativos
+        const OS_EQUIP_DETALHES = JSON.parse(document.getElementById('json-equip-detalhes').textContent);
+        const OS_TEC_DETALHES = JSON.parse(document.getElementById('json-tec-detalhes').textContent);
+        const EQUIPAMENTOS_LISTA = JSON.parse(document.getElementById('json-equip-lista').textContent);
+        let abaDashAtual = 0;
+
+        /* =====================================================================
+           6. MODAL DE VISUALIZAÇÃO RÁPIDA ("VER")
+           ===================================================================== */
+        function abrirModalVisualizarOS(btn) {
+            // Lê os atributos data-* do botão clicado na tabela
+            const id = btn.getAttribute('data-id');
+            const status = btn.getAttribute('data-status');
+            const pago = btn.getAttribute('data-pago');
+
+            document.getElementById('verOSTitulo').innerText = 'Ordem de Serviço #' + id;
+            document.getElementById('verOSSubtitulo').innerText = 'Aberta em ' + btn.getAttribute('data-abertura');
+            document.getElementById('verOSCliente').innerText = btn.getAttribute('data-cliente');
+
+            const local = btn.getAttribute('data-local');
+            const end = btn.getAttribute('data-endereco');
+            const tel = btn.getAttribute('data-telefone');
+            // Junta cidade, endereço e telefone separados por "•", ignorando campos vazios
+            document.getElementById('verOSLocal').innerText = [local, end, tel].filter(Boolean).join(' • ');
+
+            document.getElementById('verOSVisita').innerText = btn.getAttribute('data-visita');
+            document.getElementById('verOSFim').innerText = 'Finalização: ' + btn.getAttribute('data-fim');
+            document.getElementById('verOSDescricao').innerText = btn.getAttribute('data-descricao');
+            document.getElementById('verOSValor').innerText = btn.getAttribute('data-valor');
+            document.getElementById('verOSForma').innerText = ' • ' + btn.getAttribute('data-forma');
+
+            // Monta o selo colorido de status operacional
+            const statusMap = {
+                'AB': '<span class="badge-status status-AB"><span class="dot"></span>Aberto</span>',
+                'AG': '<span class="badge-status status-AG"><span class="dot"></span>Agendado</span>',
+                'EA': '<span class="badge-status status-EA"><span class="dot"></span>Em Andamento</span>',
+                'FN': '<span class="badge-status status-FN"><span class="dot"></span>Finalizado</span>'
+            };
+            document.getElementById('verOSStatusBadge').innerHTML = statusMap[status] || '';
+
+            // Monta o selo de pagamento (Pago / Pendente)
+            document.getElementById('verOSPagoBadge').innerHTML = (pago === 'S')
+                ? '<span class="badge-pgto-S">Pago</span>'
+                : '<span class="badge-pgto-N">Pendente</span>';
+
+            // Consulta no mapa JSON os equipamentos vinculados a esta OS
+            const equips = OS_EQUIP_DETALHES[id] || [];
+            const divEquips = document.getElementById('verOSEquipamentos');
+            if (equips.length === 0) {
+                divEquips.innerHTML = '<span style="color: #64748b;">Nenhum equipamento vinculado.</span>';
+            } else {
+                divEquips.innerHTML = equips.map(e =>
+                    `<div class="mb-1">• <strong>${e.marca} ${e.modelo}</strong> <span style="color:#64748b;">(${e.local})</span></div>`
+                ).join('');
+            }
+
+            // Consulta no mapa JSON os técnicos vinculados a esta OS (destacando o responsável)
+            const tecs = OS_TEC_DETALHES[id] || [];
+            const divTecs = document.getElementById('verOSTecnicos');
+            if (tecs.length === 0) {
+                divTecs.innerHTML = '<span style="color: #64748b;">Nenhum técnico atribuído.</span>';
+            } else {
+                divTecs.innerHTML = tecs.map(t =>
+                    `<div class="mb-1">• ${t.nome} ${t.responsavel ? '<span style="color:#38bdf8;font-size:0.75rem;">(Responsável)</span>' : ''}</div>`
+                ).join('');
+            }
+
+            // Atualiza o link do botão azul para já abrir a tela de OS filtrada pelo número desta OS
+            document.getElementById('btnIrParaEditarOS').href = "{% url 'listar_ordens' %}?q=" + id;
+            $('#modalVisualizarOS').modal('show');
+        }
+
+        /* =====================================================================
+           7. NAVEGAÇÃO DAS 5 ABAS DO MODAL "+ NOVA OS" NO DASHBOARD
+           ===================================================================== */
+        function abrirModalNovaOSDash() {
+            irParaAbaDash(0);
+            $('#modalNovaOSDash').modal('show');
+        }
+
+        function irParaAbaDash(idx) {
+            abaDashAtual = idx;
+            document.querySelectorAll('#modalNovaOSDash .modal-tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+            document.querySelectorAll('.dash-step-pane').forEach((p, i) => p.classList.toggle('d-none', i !== idx));
+            document.getElementById('dashBtnAnt').disabled = (idx === 0);
+            document.getElementById('dashBtnProx').disabled = (idx === 4);
+        }
+
+        function mudarAbaDash(delta) {
+            const n = abaDashAtual + delta;
+            if (n >= 0 && n <= 4) irParaAbaDash(n);
+        }
+
+        // Filtra dinamicamente os equipamentos pertencentes ao cliente selecionado na Aba 1
+        function renderEquipamentosDash() {
+            const idCli = parseInt(document.getElementById('dash_id_cliente').value);
+            const cont = document.getElementById('dashContainerEquip');
+            if (!idCli) {
+                cont.innerHTML = '<div style="color: #f59e0b; font-size: 0.9rem;">Selecione primeiro um cliente.</div>';
+                return;
+            }
+            const lista = EQUIPAMENTOS_LISTA.filter(e => e.id_cliente === idCli);
+            if (lista.length === 0) {
+                cont.innerHTML = '<div style="color: #94a3b8; font-size: 0.9rem;">Este cliente não possui equipamentos ativos.</div>';
+                return;
+            }
+            cont.innerHTML = '<div class="selectable-grid">' + lista.map(eq => `
+                <label class="selectable-card">
+                    <input type="checkbox" name="equipamentos" value="${eq.id_equipamento}">
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 600; color: #f1f5f9;">${eq.marca} — ${eq.modelo}</div>
+                        <div style="font-size: 0.76rem; color: #64748b;">${eq.local || 'Sem local'}</div>
+                    </div>
+                </label>
+            `).join('') + '</div>';
+        }
+    </script>
+</body>
+</html>

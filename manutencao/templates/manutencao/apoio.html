@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastros de Apoio - ClimaOS</title>
+
+    <!-- Bootstrap 4.6 (estrutura de grid, botões e modais) & FontAwesome (ícones) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* Variáveis CSS globais do tema escuro (Dark UI) usado em todo o ClimaOS */
+        :root {
+            --bg-body: #070d18;
+            --bg-sidebar: #090d15;
+            --bg-card: #0b1322;
+            --bg-input: #0e1729;
+            --border-color: #162235;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --primary-blue: #0284c7;
+            --primary-hover: #0369a1;
+        }
+
+        /* Trava a altura da tela em 100vh para manter a sidebar fixa enquanto só o conteúdo rola */
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* =====================================================================
+           1. BARRA LATERAL FIXA (SIDEBAR)
+           ===================================================================== */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Empurra o bloco do usuário para o rodapé da barra */
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.1; }
+        .brand-sub { font-size: 0.72rem; color: var(--text-muted); margin: 0; }
+
+        .nav-list { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 0.35rem; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.04);
+            text-decoration: none;
+        }
+
+        /* Destaque visual do item ativo no menu lateral */
+        .nav-link.active {
+            color: #38bdf8;
+            background-color: rgba(2, 132, 199, 0.15);
+            font-weight: 500;
+        }
+
+        /* Card do perfil do usuário logado na base da sidebar */
+        .user-profile {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge-admin {
+            background-color: #6366f1;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background-color: #131c2d;
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            padding: 0.4rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+        .btn-logout:hover {
+            color: #ef4444;
+            background-color: #1c2230;
+            text-decoration: none;
+        }
+
+        /* =====================================================================
+           2. ÁREA DE CONTEÚDO PRINCIPAL
+           ===================================================================== */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Permite rolar apenas a área da direita */
+        }
+
+        .content-area { padding: 2.2rem 2.5rem; }
+
+        .page-title { font-size: 1.55rem; font-weight: 600; margin: 0; color: #fff; }
+        .page-subtitle { font-size: 0.86rem; color: #64748b; margin-top: 5px; margin-bottom: 1.8rem; }
+
+        /* Abas de navegação entre Marcas e Formas de Pagamento */
+        .tabs-container {
+            display: flex;
+            gap: 2rem;
+            border-bottom: 1px solid #162235;
+            margin-bottom: 1.8rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding-bottom: 0.8rem;
+            text-decoration: none;
+            position: relative;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .tab-btn:hover { color: #cbd5e1; text-decoration: none; }
+        .tab-btn.active { color: #38bdf8; }
+        /* Linha azul sublinhando a aba selecionada */
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #0284c7;
+        }
+
+        /* Sub-cabeçalho com contador, filtro Ativos/Inativos e botão "+ Novo" */
+        .table-sub-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .total-counter { font-size: 0.88rem; color: #64748b; }
+
+        /* Botões de alternância Ativos / Inativos */
+        .status-toggle-btn {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .status-toggle-btn:hover {
+            color: #fff;
+            text-decoration: none;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .status-toggle-btn.active {
+            background-color: #0284c7;
+            border-color: #0284c7;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .btn-add-item {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.5rem 1.15rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .btn-add-item:hover { background-color: #0369a1; color: #fff; }
+
+        /* Cartão envoltório da tabela */
+        .table-responsive-card {
+            border: 1px solid #131d2e;
+            border-radius: 10px;
+            background-color: #090e18;
+            overflow: hidden;
+        }
+
+        .table-apoio {
+            width: 100%;
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .table-apoio th {
+            padding: 0.9rem 1.4rem;
+            background-color: #070d18;
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid #131d2e;
+        }
+
+        .table-apoio td {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid #131d2e;
+            vertical-align: middle;
+        }
+        .table-apoio tr:last-child td { border-bottom: none; }
+
+        .item-id { color: #38bdf8; font-weight: 600; }
+        .item-name { color: #f1f5f9; font-weight: 500; }
+
+        /* Botões de ação nas linhas da tabela (Editar, Inativar e Reativar) */
+        .btn-action-edit {
+            border: 1px solid #1a2942;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.06);
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 0.82rem;
+            text-decoration: none;
+            margin-right: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action-edit:hover { background: #1a2942; color: #fff; text-decoration: none; }
+
+        .btn-action-inactivate {
+            border: 1px solid #4a2408;
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 0.82rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action-inactivate:hover { background: #78350f; color: #fff; text-decoration: none; }
+
+        .btn-action-activate {
+            border: 1px solid #14532d;
+            color: #4ade80;
+            background: rgba(20, 83, 45, 0.2);
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 0.82rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action-activate:hover { background: #14532d; color: #fff; text-decoration: none; }
+
+        /* =====================================================================
+           3. MODAIS (CADASTRO, EDIÇÃO E CONFIRMAÇÃO DE INATIVAÇÃO)
+           ===================================================================== */
+        .modal-content-figma {
+            background-color: #0b1322;
+            border: 1px solid #162438;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-header-figma {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.3rem 1.6rem;
+            border-bottom: 1px solid #131d2e;
+        }
+
+        .modal-title-figma { font-size: 1.15rem; font-weight: 600; color: #fff; margin: 0; }
+
+        .close-figma-btn { background: none; border: none; color: #64748b; font-size: 1.3rem; cursor: pointer; outline: none; }
+        .close-figma-btn:hover { color: #fff; }
+
+        .modal-body-figma { padding: 1.6rem; }
+
+        .form-label-figma { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem; display: block; }
+
+        .form-input-figma {
+            background-color: #070d18;
+            border: 1px solid #162438;
+            border-radius: 6px;
+            color: #fff;
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .form-input-figma:focus { border-color: #0284c7; }
+
+        .modal-footer-figma {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 1rem 1.6rem 1.4rem;
+            border-top: none;
+        }
+
+        .btn-figma-cancel {
+            background-color: #131d2e;
+            border: 1px solid #1e2c44;
+            color: #94a3b8;
+            padding: 0.55rem 1.3rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .btn-figma-cancel:hover { background-color: #1a2538; color: #fff; }
+
+        .btn-figma-save {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.55rem 1.6rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .btn-figma-save:hover { background-color: #0369a1; }
+
+        .modal-inactivate-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(220, 38, 38, 0.12);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+            font-size: 1.35rem;
+            margin-right: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =====================================================================
+         1. BARRA LATERAL DE NAVEGAÇÃO
+         ===================================================================== -->
+    <aside class="sidebar">
+        <div>
+            <!-- Logotipo do sistema -->
+            <div class="brand-box">
+                <div class="brand-icon">
+                    <i class="fas fa-snowflake"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">ClimaOS</h1>
+                    <p class="brand-sub">Gestão de Serviços</p>
+                </div>
+            </div>
+
+            <!-- Links das rotas definidas em urls.py via tag  -->
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="fas fa-th-large"></i> Painel Geral
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_ordens' %}" class="nav-link">
+                        <i class="fas fa-file-invoice"></i> Ordens de Serviço
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_clientes' %}" class="nav-link">
+                        <i class="fas fa-user-friends"></i> Clientes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_equipamentos' %}" class="nav-link">
+                        <i class="fas fa-tv"></i> Equipamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_tecnicos' %}" class="nav-link">
+                        <i class="fas fa-wrench"></i> Equipe Técnica
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'financeiro' %}" class="nav-link">
+                        <i class="fas fa-dollar-sign"></i> Financeiro
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <!-- Classe 'active' marca visualmente a tela atual -->
+                    <a href="{% url 'cadastros_apoio' %}" class="nav-link active">
+                        <i class="fas fa-cog"></i> Cadastros de Apoio
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Bloco com os dados da sessão do usuário logado -->
+        <div class="user-profile">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Pega as 2 primeiras letras do nome do usuário em maiúsculo para o avatar -->
+                    <div class="avatar-circle mr-2">{{ usuario_nome|slice:":2"|upper|default:"CE" }}</div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">{{ usuario_nome }}</div>
+                        <div style="font-size: 0.72rem; color: #64748b;">{{ usuario_login }}</div>
+                    </div>
+                </div>
+                <span class="badge-admin">{{ usuario_tipo }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         2. CONTEÚDO PRINCIPAL
+         ===================================================================== -->
+    <main class="main-wrapper">
+        <div class="content-area">
+            <h2 class="page-title">Cadastros de Apoio</h2>
+            <p class="page-subtitle">Gerencie marcas de equipamentos e formas de pagamento usadas nas OS.</p>
+
+            <!-- ABAS DE NAVEGAÇÃO (Alternam o parâmetro ?aba= na URL mantendo o status atual) -->
+            <div class="tabs-container">
+                <a href="?aba=marcas&status={{ status_filtro }}" class="tab-btn {% if aba_ativa == 'marcas' %}active{% endif %}">
+                    Marcas de Equipamentos
+                </a>
+                <a href="?aba=formas&status={{ status_filtro }}" class="tab-btn {% if aba_ativa == 'formas' %}active{% endif %}">
+                    Formas de Pagamento
+                </a>
+            </div>
+
+            <!-- ===============================================================
+                 CONTEÚDO DA ABA 1: MARCAS DE EQUIPAMENTOS
+                 =============================================================== -->
+            {% if aba_ativa == 'marcas' %}
+            <div class="table-sub-header">
+                <span class="total-counter">
+                    {{ total_marcas }} fabricante{{ total_marcas|pluralize }} {% if status_filtro == 'I' %}inativo{{ total_marcas|pluralize }}{% else %}cadastrado{{ total_marcas|pluralize }}{% endif %}
+                </span>
+
+                <div class="d-flex align-items-center" style="gap: 10px;">
+                    <!-- Botões para alternar entre Marcas Ativas (?status=A) e Inativas (?status=I) -->
+                    <div class="d-flex" style="gap: 6px;">
+                        <a href="?aba=marcas&status=A" class="status-toggle-btn {% if status_filtro == 'A' %}active{% endif %}">
+                            Ativos
+                        </a>
+                        <a href="?aba=marcas&status=I" class="status-toggle-btn {% if status_filtro == 'I' %}active{% endif %}">
+                            Inativos
+                        </a>
+                    </div>
+
+                    <!-- Abre o Modal 1 limpo para cadastrar uma nova marca -->
+                    <button type="button" class="btn-add-item" onclick="abrirModalNovaMarca()">
+                        + Nova Marca
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive-card">
+                <table class="table-apoio">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">ID</th>
+                            <th>Fabricante / Marca</th>
+                            <th style="width: 220px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Percorre a lista 'marcas' enviada pelo views.py -->
+                        {% for m in marcas %}
+                        <tr>
+                            <td class="item-id">#{{ m.id_marca }}</td>
+                            <td class="item-name">{{ m.descricao }}</td>
+                            <td>
+                                <!-- Se estiver Ativa ('A'), exibe Editar e Inativar; se Inativa ('I'), exibe Reativar -->
+                                {% if m.status == 'A' %}
+                                    <a href="javascript:void(0)" class="btn-action-edit" 
+                                       onclick="abrirModalEditarMarca('{{ m.id_marca }}', '{{ m.descricao }}')">
+                                        Editar
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn-action-inactivate"
+                                       onclick="abrirModalInativarMarca('{{ m.id_marca }}', '{{ m.descricao }}')">
+                                        Inativar
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'ativar_marca' m.id_marca %}" class="btn-action-activate"
+                                       onclick="return confirm('Deseja reativar a marca {{ m.descricao }}?')">
+                                        Reativar
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <!-- Exibido automaticamente pelo Django caso a lista 'marcas' esteja vazia -->
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                Nenhuma marca {% if status_filtro == 'I' %}inativa{% else %}cadastrada{% endif %}.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===============================================================
+                 CONTEÚDO DA ABA 2: FORMAS DE PAGAMENTO
+                 =============================================================== -->
+            {% else %}
+            <div class="table-sub-header">
+                <span class="total-counter">
+                    {{ total_formas }} forma{{ total_formas|pluralize }} de pagamento {% if status_filtro == 'I' %}inativa{{ total_formas|pluralize }}{% endif %}
+                </span>
+
+                <div class="d-flex align-items-center" style="gap: 10px;">
+                    <!-- Botões para alternar entre Formas Ativas (?status=A) e Inativas (?status=I) -->
+                    <div class="d-flex" style="gap: 6px;">
+                        <a href="?aba=formas&status=A" class="status-toggle-btn {% if status_filtro == 'A' %}active{% endif %}">
+                            Ativos
+                        </a>
+                        <a href="?aba=formas&status=I" class="status-toggle-btn {% if status_filtro == 'I' %}active{% endif %}">
+                            Inativos
+                        </a>
+                    </div>
+
+                    <!-- Abre o Modal 3 limpo para cadastrar uma nova forma de pagamento -->
+                    <button type="button" class="btn-add-item" onclick="abrirModalNovaForma()">
+                        + Nova Forma
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive-card">
+                <table class="table-apoio">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">ID</th>
+                            <th>Descrição</th>
+                            <th style="width: 220px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Percorre a lista 'formas_pgto' enviada pelo views.py -->
+                        {% for f in formas_pgto %}
+                        <tr>
+                            <td class="item-id">#{{ f.id_forma_pagto }}</td>
+                            <td class="item-name">{{ f.descricao }}</td>
+                            <td>
+                                <!-- Se estiver Ativa ('A'), exibe Editar e Inativar; se Inativa ('I'), exibe Reativar -->
+                                {% if f.status == 'A' %}
+                                    <a href="javascript:void(0)" class="btn-action-edit"
+                                       onclick="abrirModalEditarForma('{{ f.id_forma_pagto }}', '{{ f.descricao }}')">
+                                        Editar
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn-action-inactivate"
+                                       onclick="abrirModalInativarForma('{{ f.id_forma_pagto }}', '{{ f.descricao }}')">
+                                        Inativar
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'ativar_forma_pgto' f.id_forma_pagto %}" class="btn-action-activate"
+                                       onclick="return confirm('Deseja reativar a forma de pagamento {{ f.descricao }}?')">
+                                        Reativar
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                Nenhuma forma de pagamento {% if status_filtro == 'I' %}inativa{% else %}cadastrada{% endif %}.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         MODAL 1: NOVA / EDITAR MARCA (Mesmo modal serve para incluir e editar)
+         ===================================================================== -->
+    <div class="modal fade" id="modalMarca" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+            <div class="modal-content modal-content-figma">
+                <div class="modal-header-figma">
+                    <h5 class="modal-title-figma" id="modalMarcaTitulo">Nova Marca</h5>
+                    <button type="button" class="close-figma-btn" data-dismiss="modal">&times;</button>
+                </div>
+                <form method="POST" action="{% url 'cadastros_apoio' %}">
+                    <!-- Token obrigatório de proteção contra falsificação de requisição (CSRF) -->
+                    {% csrf_token %}
+                    <!-- Campo oculto que avisa a view qual tabela deve ser alterada -->
+                    <input type="hidden" name="tipo_acao" value="marca">
+                    <!-- Se 'id_marca' vier vazio = INSERT; se vier com ID = UPDATE -->
+                    <input type="hidden" name="id_marca" id="modal_marca_id">
+
+                    <div class="modal-body-figma">
+                        <label class="form-label-figma">Nome do Fabricante</label>
+                        <input type="text" name="descricao" id="modal_marca_nome" class="form-input-figma" placeholder="Ex: Daikin, Carrier, Gree..." required>
+                    </div>
+
+                    <div class="modal-footer-figma">
+                        <button type="button" class="btn btn-figma-cancel" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-figma-save">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: CONFIRMAÇÃO DE INATIVAÇÃO DE MARCA
+         ===================================================================== -->
+    <div class="modal fade" id="modalInativarMarca" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+            <div class="modal-content modal-content-figma p-3">
+                <div class="modal-body-figma pb-2">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="modal-inactivate-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title-figma mb-1">Inativar Marca</h5>
+                            <span style="font-size: 0.8rem; color: #64748b;">Revise os dados antes de confirmar.</span>
+                        </div>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5;" id="textoInativarMarca">
+                        A marca ficará inativa para novos cadastros. Os equipamentos já vinculados continuarão com a referência preservada.
+                    </p>
+                </div>
+                <div class="modal-footer-figma">
+                    <button type="button" class="btn btn-figma-cancel" data-dismiss="modal">Cancelar</button>
+                    <!-- O href deste botão é preenchido dinamicamente pelo JS com /apoio/marca/inativar/<id>/ -->
+                    <a id="btnConfirmarInativarMarca" href="#" class="btn btn-figma-save" style="background-color: #dc2626;">
+                        Sim, inativar marca
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: NOVA / EDITAR FORMA DE PAGAMENTO
+         ===================================================================== -->
+    <div class="modal fade" id="modalForma" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+            <div class="modal-content modal-content-figma">
+                <div class="modal-header-figma">
+                    <h5 class="modal-title-figma" id="modalFormaTitulo">Nova Forma de Pagamento</h5>
+                    <button type="button" class="close-figma-btn" data-dismiss="modal">&times;</button>
+                </div>
+                <form method="POST" action="{% url 'cadastros_apoio' %}">
+                    {% csrf_token %}
+                    <!-- Identifica para o views.py que a gravação é na tabela 'forma_pgto' -->
+                    <input type="hidden" name="tipo_acao" value="forma_pgto">
+                    <input type="hidden" name="id_forma_pagto" id="modal_forma_id">
+
+                    <div class="modal-body-figma">
+                        <label class="form-label-figma">Descrição</label>
+                        <input type="text" name="descricao" id="modal_forma_nome" class="form-input-figma" placeholder="Ex: Pix, Cartão de Crédito..." required>
+                    </div>
+
+                    <div class="modal-footer-figma">
+                        <button type="button" class="btn btn-figma-cancel" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-figma-save">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 4: CONFIRMAÇÃO DE INATIVAÇÃO DE FORMA DE PAGAMENTO
+         ===================================================================== -->
+    <div class="modal fade" id="modalInativarForma" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+            <div class="modal-content modal-content-figma p-3">
+                <div class="modal-body-figma pb-2">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="modal-inactivate-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title-figma mb-1">Inativar Forma de Pagamento</h5>
+                            <span style="font-size: 0.8rem; color: #64748b;">Revise os dados antes de confirmar.</span>
+                        </div>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5;" id="textoInativarForma">
+                        A forma de pagamento ficará inativa para novas OS. Os registros financeiros existentes serão preservados.
+                    </p>
+                </div>
+                <div class="modal-footer-figma">
+                    <button type="button" class="btn btn-figma-cancel" data-dismiss="modal">Cancelar</button>
+                    <a id="btnConfirmarInativarForma" href="#" class="btn btn-figma-save" style="background-color: #dc2626;">
+                        Sim, inativar forma
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliotecas JavaScript necessárias para o funcionamento dos modais do Bootstrap 4 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* =====================================================================
+           FUNÇÕES DE CONTROLE DOS MODAIS DE MARCAS
+           ===================================================================== */
+        function abrirModalNovaMarca() {
+            document.getElementById('modalMarcaTitulo').innerText = 'Nova Marca';
+            document.getElementById('modal_marca_id').value = ''; // ID vazio indica INSERT no backend
+            document.getElementById('modal_marca_nome').value = '';
+            $('#modalMarca').modal('show');
+        }
+
+        function abrirModalEditarMarca(id, nome) {
+            document.getElementById('modalMarcaTitulo').innerText = 'Editar Marca #' + id;
+            document.getElementById('modal_marca_id').value = id; // ID preenchido indica UPDATE no backend
+            document.getElementById('modal_marca_nome').value = nome;
+            $('#modalMarca').modal('show');
+        }
+
+        function abrirModalInativarMarca(id, nome) {
+            document.getElementById('textoInativarMarca').innerHTML = 
+                'A marca "<strong>' + nome + '</strong>" ficará inativa para novos cadastros. Os equipamentos já vinculados continuarão com a referência preservada.';
+            document.getElementById('btnConfirmarInativarMarca').href = '/apoio/marca/inativar/' + id + '/';
+            $('#modalInativarMarca').modal('show');
+        }
+
+        /* =====================================================================
+           FUNÇÕES DE CONTROLE DOS MODAIS DE FORMAS DE PAGAMENTO
+           ===================================================================== */
+        function abrirModalNovaForma() {
+            document.getElementById('modalFormaTitulo').innerText = 'Nova Forma de Pagamento';
+            document.getElementById('modal_forma_id').value = ''; // ID vazio indica INSERT no backend
+            document.getElementById('modal_forma_nome').value = '';
+            $('#modalForma').modal('show');
+        }
+
+        function abrirModalEditarForma(id, nome) {
+            document.getElementById('modalFormaTitulo').innerText = 'Editar Forma #' + id;
+            document.getElementById('modal_forma_id').value = id; // ID preenchido indica UPDATE no backend
+            document.getElementById('modal_forma_nome').value = nome;
+            $('#modalForma').modal('show');
+        }
+
+        function abrirModalInativarForma(id, nome) {
+            document.getElementById('textoInativarForma').innerHTML = 
+                'A forma de pagamento "<strong>' + nome + '</strong>" ficará inativa para novas OS. Os registros financeiros existentes serão preservados.';
+            document.getElementById('btnConfirmarInativarForma').href = '/apoio/forma/inativar/' + id + '/';
+            $('#modalInativarForma').modal('show');
+        }
+    </script>
+</body>
+</html>

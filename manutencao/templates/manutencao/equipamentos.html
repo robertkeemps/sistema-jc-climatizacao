@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipamentos - ClimaOS</title>
+
+    <!-- Bootstrap 4.6 (grid, botões, formulários e modais) & FontAwesome (ícones) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* =====================================================================
+           1. VARIÁVEIS DE CORES E LAYOUT BASE (DARK UI)
+           ===================================================================== */
+        :root {
+            --bg-body: #0d121d;
+            --bg-sidebar: #090d15;
+            --bg-card: #0f1726;
+            --bg-input: #131b2c;
+            --border-color: #1a2538;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --primary-blue: #0284c7;
+            --primary-hover: #0369a1;
+        }
+
+        /* Trava a altura da tela em 100vh para manter a barra lateral fixa enquanto só a tabela rola */
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* =====================================================================
+           2. BARRA LATERAL FIXA (SIDEBAR)
+           ===================================================================== */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.1; }
+        .brand-sub { font-size: 0.72rem; color: var(--text-muted); margin: 0; }
+
+        .nav-list { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 0.35rem; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.04);
+            text-decoration: none;
+        }
+
+        .nav-link.active {
+            color: #38bdf8;
+            background-color: rgba(2, 132, 199, 0.15);
+            font-weight: 500;
+        }
+
+        /* Cartão de perfil do usuário autenticado na base da sidebar */
+        .user-profile {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge-admin {
+            background-color: #6366f1;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background-color: #131c2d;
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            padding: 0.4rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+        .btn-logout:hover {
+            color: #ef4444;
+            background-color: #1c2230;
+            text-decoration: none;
+        }
+
+        /* =====================================================================
+           3. CONTEÚDO PRINCIPAL, TOPBAR E TABELA DE EQUIPAMENTOS
+           ===================================================================== */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            height: 65px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            background-color: var(--bg-sidebar);
+            flex-shrink: 0;
+        }
+
+        .search-global { position: relative; width: 320px; }
+        .search-global input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            border-radius: 6px;
+            padding: 0.45rem 0.75rem 0.45rem 2rem;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        .search-global i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .notification-btn { position: relative; background: none; border: none; color: #94a3b8; font-size: 1.15rem; cursor: pointer; }
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: #f59e0b;
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-area { padding: 2rem; }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title { font-size: 1.45rem; font-weight: 600; margin: 0; color: #fff; }
+        .page-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .btn-add-item {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-add-item:hover { background-color: #0369a1; color: #fff; }
+
+        .filter-input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            font-size: 0.88rem;
+            width: 320px;
+        }
+
+        /* Botões de alternância Ativos / Inativos */
+        .status-toggle-btn {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .status-toggle-btn:hover { color: #fff; text-decoration: none; background-color: rgba(255, 255, 255, 0.05); }
+        .status-toggle-btn.active { background-color: #0284c7; border-color: #0284c7; color: #fff; font-weight: 500; }
+
+        .table-responsive {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #0c1320;
+        }
+
+        .table-custom {
+            width: 100%;
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            color: #cbd5e1;
+            font-size: 0.88rem;
+        }
+
+        .table-custom th {
+            padding: 1rem;
+            background-color: #090e18;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-custom td {
+            padding: 1.1rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .table-custom tr:last-child td { border-bottom: none; }
+
+        .item-id { color: #38bdf8; font-weight: 600; }
+
+        .client-name-cell { color: #fff; font-weight: 500; display: block; }
+        .client-location-sub { color: #64748b; font-size: 0.76rem; }
+
+        /* Badges coloridas que diferenciam visualmente o tipo do aparelho */
+        .badge-model-split {
+            background-color: rgba(2, 132, 199, 0.2);
+            color: #38bdf8;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-model-piso {
+            background-color: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-model-janela {
+            background-color: rgba(234, 179, 8, 0.2);
+            color: #fde047;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-history-box {
+            background-color: #131d2e;
+            color: #94a3b8;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.78rem;
+            display: inline-block;
+        }
+
+        /* Botões de ação da tabela (Editar, Inativar, Reativar) */
+        .btn-action-edit {
+            border: 1px solid #1e3a8a;
+            color: #60a5fa;
+            background: rgba(30, 58, 138, 0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            text-decoration: none;
+            margin-right: 6px;
+            cursor: pointer;
+        }
+        .btn-action-edit:hover { background: #1e3a8a; color: #fff; text-decoration: none; }
+
+        .btn-action-inactivate {
+            border: 1px solid #78350f;
+            color: #f59e0b;
+            background: rgba(120, 53, 15, 0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-action-inactivate:hover { background: #78350f; color: #fff; text-decoration: none; }
+
+        .btn-action-activate {
+            border: 1px solid #14532d;
+            color: #4ade80;
+            background: rgba(20, 83, 45, 0.2);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            text-decoration: none;
+        }
+        .btn-action-activate:hover { background: #14532d; color: #fff; text-decoration: none; }
+
+        /* =====================================================================
+           4. ESTILOS DOS MODAIS (CADASTRO/EDIÇÃO E CONFIRMAÇÃO DE INATIVAÇÃO)
+           ===================================================================== */
+        .modal-content-custom {
+            background-color: #0f1728;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .modal-title-custom { font-size: 1.15rem; font-weight: 600; color: #fff; margin: 0; }
+
+        .close-modal-btn { background: none; border: none; color: #64748b; font-size: 1.4rem; cursor: pointer; }
+        .close-modal-btn:hover { color: #fff; }
+
+        .modal-body-custom { padding: 1.5rem; }
+
+        .form-label-custom { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.35rem; display: block; }
+
+        .form-input-custom {
+            background-color: #0b111e;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            color: #fff;
+            width: 100%;
+            padding: 0.55rem 0.8rem;
+            font-size: 0.88rem;
+            outline: none;
+        }
+        .form-input-custom:focus { border-color: #0284c7; }
+
+        .radio-pills-row { display: flex; gap: 1.5rem; margin-top: 0.3rem; }
+        .radio-pills-row label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .modal-footer-custom {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #1e293b;
+        }
+
+        .btn-modal-cancel {
+            background-color: #1a2538;
+            border: 1px solid #29384f;
+            color: #94a3b8;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+        }
+        .btn-modal-cancel:hover { background-color: #24334a; color: #fff; }
+
+        .btn-modal-save {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.5rem 1.4rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+        .btn-modal-save:hover { background-color: #0369a1; }
+    </style>
+</head>
+<body>
+
+    <!-- =====================================================================
+         1. BARRA LATERAL DE NAVEGAÇÃO
+         ===================================================================== -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-box">
+                <div class="brand-icon">
+                    <i class="fas fa-snowflake"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">ClimaOS</h1>
+                    <p class="brand-sub">Gestão de Serviços</p>
+                </div>
+            </div>
+
+            {# Links de navegação das rotas definidas em urls.py #}
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="fas fa-th-large"></i> Painel Geral
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_ordens' %}" class="nav-link">
+                        <i class="fas fa-file-invoice"></i> Ordens de Serviço
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_clientes' %}" class="nav-link">
+                        <i class="fas fa-user-friends"></i> Clientes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    {# Classe 'active' destaca visualmente o módulo de Equipamentos #}
+                    <a href="{% url 'listar_equipamentos' %}" class="nav-link active">
+                        <i class="fas fa-tv"></i> Equipamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_tecnicos' %}" class="nav-link">
+                        <i class="fas fa-wrench"></i> Equipe Técnica
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'financeiro' %}" class="nav-link">
+                        <i class="fas fa-dollar-sign"></i> Financeiro
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'cadastros_apoio' %}" class="nav-link">
+                        <i class="fas fa-cog"></i> Cadastros de Apoio
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        {# Cartão de perfil do usuário autenticado na sessão #}
+        <div class="user-profile">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-circle mr-2">{{ usuario_nome|slice:":2"|upper|default:"CE" }}</div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">{{ usuario_nome }}</div>
+                        <div style="font-size: 0.72rem; color: #64748b;">{{ usuario_login }}</div>
+                    </div>
+                </div>
+                <span class="badge-admin">{{ usuario_tipo }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         2. CONTEÚDO PRINCIPAL
+         ===================================================================== -->
+    <main class="main-wrapper">
+        <header class="topbar">
+            <div class="search-global">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar OS, cliente, equipamento...">
+            </div>
+            <div>
+                <button class="notification-btn" title="Notificações">
+                    <i class="far fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-area">
+            {# Cabeçalho da página com contador de aparelhos e botão "+ Novo Equipamento" #}
+            <div class="header-section">
+                <div>
+                    <h2 class="page-title">Equipamentos</h2>
+                    <p class="page-subtitle">{{ total_cadastrados }} aparelhos {% if status_filtro == 'I' %}inativos{% else %}cadastrados{% endif %}</p>
+                </div>
+                <button type="button" class="btn-add-item" onclick="abrirModalNovo()">
+                    <i class="fas fa-plus"></i> Novo Equipamento
+                </button>
+            </div>
+
+            {# Barra de filtro instantâneo via JS e abas Ativos (?status=A) / Inativos (?status=I) #}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <input type="text" class="filter-input" placeholder="Buscar por cliente, marca ou local..." id="inputFiltro" onkeyup="filtrarTabela()">
+                
+                <div class="d-flex gap-2">
+                    <a href="{% url 'listar_equipamentos' %}?status=A" class="status-toggle-btn {% if status_filtro == 'A' %}active{% endif %}">
+                        Ativos
+                    </a>
+                    <a href="{% url 'listar_equipamentos' %}?status=I" class="status-toggle-btn {% if status_filtro == 'I' %}active{% endif %}">
+                        Inativos
+                    </a>
+                </div>
+            </div>
+
+            {# Tabela principal de listagem dos equipamentos #}
+            <div class="table-responsive">
+                <table class="table-custom" id="tabelaEquipamentos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Modelo</th>
+                            <th>Marca</th>
+                            <th>Local de Instalação</th>
+                            <th>Cliente</th>
+                            <th>Observações</th>
+                            <th class="text-center">Histórico</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in equipamentos %}
+                        <tr>
+                            <td class="item-id">#{{ e.id_equipamento }}</td>
+                            <td>
+                                {# Aplica uma cor de etiqueta distinta conforme o tipo do aparelho #}
+                                {% if e.modelo == 'Split' %}
+                                    <span class="badge-model-split">{{ e.modelo }}</span>
+                                {% elif e.modelo == 'Piso-Teto' %}
+                                    <span class="badge-model-piso">{{ e.modelo }}</span>
+                                {% else %}
+                                    <span class="badge-model-janela">{{ e.modelo }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ e.marca_nome }}</td>
+                            <td>{{ e.local_instalado }}</td>
+                            <td>
+                                <span class="client-name-cell">{{ e.cliente_nome }}</span>
+                                <span class="client-location-sub">{{ e.cliente_cidade }} — {{ e.cliente_uf }}</span>
+                            </td>
+                            <td>{{ e.observacao|default:"—" }}</td>
+                            <td class="text-center">
+                                {# Quantidade de Ordens de Serviço em que este aparelho já foi atendido #}
+                                <span class="badge-history-box">{{ e.total_os|default:"0" }} OS</span>
+                            </td>
+                            <td class="text-center">
+                                {% if e.status == 'A' %}
+                                    {# Os atributos data-* evitam problemas com aspas ou quebras de linha no campo observação #}
+                                    <a href="javascript:void(0)" class="btn-action-edit"
+                                       data-id="{{ e.id_equipamento }}"
+                                       data-cliente="{{ e.id_cliente }}"
+                                       data-marca="{{ e.id_marca }}"
+                                       data-modelo="{{ e.modelo }}"
+                                       data-local="{{ e.local_instalado }}"
+                                       data-obs="{{ e.observacao|default_if_none:'' }}"
+                                       onclick="abrirModalEditarBtn(this)">
+                                        Editar
+                                    </a>
+                                    <a href="javascript:void(0)" class="btn-action-inactivate"
+                                       data-id="{{ e.id_equipamento }}"
+                                       data-modelo="{{ e.modelo }}"
+                                       data-local="{{ e.local_instalado }}"
+                                       onclick="abrirModalInativarBtn(this)">
+                                        Inativar
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'ativar_equipamento' e.id_equipamento %}" class="btn-action-activate" onclick="return confirm('Deseja reativar este equipamento?')">
+                                        Reativar
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                Nenhum equipamento {% if status_filtro == 'I' %}inativo{% else %}ativo{% endif %} encontrado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         3. MODAL ÚNICO DE CADASTRO (INSERT) E EDIÇÃO (UPDATE) DE EQUIPAMENTO
+         ===================================================================== -->
+    <div class="modal fade" id="modalEquipamento" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+            <div class="modal-content modal-content-custom">
+                <div class="modal-header-custom">
+                    <h5 class="modal-title-custom" id="modalTitulo">Novo Equipamento</h5>
+                    <button type="button" class="close-modal-btn" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+
+                <form method="POST" action="{% url 'listar_equipamentos' %}">
+                    {% csrf_token %}
+                    {# Campo oculto: vazio = INSERT; com ID = UPDATE na view listar_equipamentos #}
+                    <input type="hidden" name="equipamento_id" id="modal_equipamento_id">
+
+                    <div class="modal-body-custom">
+                        <div class="form-row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Cliente Proprietário</label>
+                                {# Lista apenas clientes ativos carregados pelo views.py #}
+                                <select name="id_cliente" id="modal_id_cliente" class="form-input-custom" required>
+                                    <option value="">Selecione...</option>
+                                    {% for c in clientes_select %}
+                                    <option value="{{ c.id_cliente }}">{{ c.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Fabricante (Marca)</label>
+                                {# Lista apenas marcas ativas carregadas pelo views.py #}
+                                <select name="id_marca" id="modal_id_marca" class="form-input-custom" required>
+                                    <option value="">Selecione...</option>
+                                    {% for m in marcas_select %}
+                                    <option value="{{ m.id_marca }}">{{ m.descricao }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label-custom">Tipo de Modelo</label>
+                            <div class="radio-pills-row">
+                                <label><input type="radio" name="modelo" value="Split" checked> Split</label>
+                                <label><input type="radio" name="modelo" value="Janela"> Janela</label>
+                                <label><input type="radio" name="modelo" value="Piso-Teto"> Piso-Teto</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label-custom">Local de Instalação</label>
+                            <input type="text" name="local_instalado" id="modal_local" class="form-input-custom" placeholder="Ex: Sala de Estar, Quarto Casal, Recepção" required>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="form-label-custom">Observações</label>
+                            <textarea name="observacao" id="modal_observacao" rows="3" class="form-input-custom" placeholder="Ex: 12.000 BTUs, 220V, instalado em 2021"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer-custom">
+                        <button type="button" class="btn btn-modal-cancel" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-modal-save">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         4. MODAL DE CONFIRMAÇÃO DE INATIVAÇÃO (SOFT DELETE)
+         ===================================================================== -->
+    <div class="modal fade" id="modalConfirmarInativacaoEquip" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content modal-content-custom text-center p-4">
+                <div class="mb-3">
+                    <div style="width: 56px; height: 56px; background: rgba(225, 29, 72, 0.15); border: 1px solid #9f1239; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-triangle" style="color: #fb7185; font-size: 1.5rem;"></i>
+                    </div>
+                </div>
+                
+                <h5 class="modal-title-custom mb-1">Inativar Equipamento</h5>
+                <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 1.2rem;">Revise os dados antes de confirmar.</p>
+                
+                <p style="color: #cbd5e1; font-size: 0.88rem; margin-bottom: 1.5rem;" id="textoConfirmacaoInativar">
+                    O equipamento ficará inativo, mas seu histórico de atendimentos será preservado.
+                </p>
+                
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-modal-cancel mr-2" data-dismiss="modal">Cancelar</button>
+                    <a id="btnConfirmarInativarEquip" href="#" class="btn btn-modal-save" style="background-color: #e11d48; border-color: #be123c;">
+                        Sim, inativar equipamento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependências JavaScript do Bootstrap 4.6 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* =====================================================================
+           5. FUNÇÕES DE CONTROLE DOS MODAIS E FILTRO DA TABELA
+           ===================================================================== */
+        function abrirModalNovo() {
+            document.getElementById('modalTitulo').innerText = 'Novo Equipamento';
+            document.getElementById('modal_equipamento_id').value = ''; // ID vazio indica INSERT no backend
+            document.getElementById('modal_id_cliente').value = '';
+            document.getElementById('modal_id_marca').value = '';
+            document.getElementById('modal_local').value = '';
+            document.getElementById('modal_observacao').value = '';
+            document.querySelector('input[name="modelo"][value="Split"]').checked = true;
+            $('#modalEquipamento').modal('show');
+        }
+
+        // Lê os atributos data-* do botão "Editar" clicado e preenche os campos do modal
+        function abrirModalEditarBtn(elemento) {
+            var id = elemento.getAttribute('data-id');
+            var id_cliente = elemento.getAttribute('data-cliente');
+            var id_marca = elemento.getAttribute('data-marca');
+            var modelo = elemento.getAttribute('data-modelo');
+            var local = elemento.getAttribute('data-local');
+            var observacao = elemento.getAttribute('data-obs');
+
+            document.getElementById('modalTitulo').innerText = 'Editar Equipamento #' + id;
+            document.getElementById('modal_equipamento_id').value = id; // ID preenchido indica UPDATE no backend
+            document.getElementById('modal_id_cliente').value = id_cliente;
+            document.getElementById('modal_id_marca').value = id_marca;
+            document.getElementById('modal_local').value = local;
+            document.getElementById('modal_observacao').value = observacao;
+
+            // Seleciona o radio button correspondente ao modelo atual do equipamento
+            var radio = document.querySelector('input[name="modelo"][value="' + modelo + '"]');
+            if (radio) {
+                radio.checked = true;
+            }
+
+            $('#modalEquipamento').modal('show');
+        }
+
+        // Prepara o modal de confirmação de inativação com o ID, modelo e local do equipamento
+        function abrirModalInativarBtn(elemento) {
+            var id = elemento.getAttribute('data-id');
+            var modelo = elemento.getAttribute('data-modelo');
+            var local = elemento.getAttribute('data-local');
+
+            document.getElementById('textoConfirmacaoInativar').innerText = 
+                'O equipamento #' + id + ' (' + modelo + ' — ' + local + ') ficará inativo, mas seu histórico de atendimentos será preservado.';
+            document.getElementById('btnConfirmarInativarEquip').href = '/equipamentos/inativar/' + id + '/';
+            $('#modalConfirmarInativacaoEquip').modal('show');
+        }
+
+        // Filtra as linhas da tabela em tempo real conforme o usuário digita no campo de busca
+        function filtrarTabela() {
+            var input = document.getElementById("inputFiltro");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tabelaEquipamentos");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                var textoLinha = tr[i].innerText.toLowerCase();
+                if (textoLinha.indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>

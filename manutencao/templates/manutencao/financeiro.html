@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro - ClimaOS</title>
+
+    <!-- Bootstrap 4.6 (grid, botões, formulários e modais) & FontAwesome (ícones) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* =====================================================================
+           1. VARIÁVEIS DE CORES E ESTRUTURA BASE (DARK UI)
+           ===================================================================== */
+        :root {
+            --bg-body: #070d18;
+            --bg-sidebar: #090d15;
+            --bg-card: #0b1322;
+            --bg-input: #0e1729;
+            --border-color: #162235;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --primary-blue: #0284c7;
+            --primary-hover: #0369a1;
+        }
+
+        /* Fixa a altura da página em 100vh para manter a sidebar parada enquanto o painel rola */
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* =====================================================================
+           2. BARRA LATERAL FIXA (SIDEBAR)
+           ===================================================================== */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.1; }
+        .brand-sub { font-size: 0.72rem; color: var(--text-muted); margin: 0; }
+
+        .nav-list { list-style: none; padding: 0; margin: 0; }
+        .nav-item { margin-bottom: 0.35rem; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: #fff; background-color: rgba(255, 255, 255, 0.04); text-decoration: none; }
+        .nav-link.active { color: #38bdf8; background-color: rgba(2, 132, 199, 0.15); font-weight: 500; }
+
+        /* Cartão de perfil do usuário logado na base da barra lateral */
+        .user-profile {
+            background-color: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-circle {
+            width: 38px;
+            height: 38px;
+            background-color: #1e293b;
+            color: #38bdf8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge-admin {
+            background-color: #6366f1;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background-color: #131c2d;
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            padding: 0.4rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+        .btn-logout:hover { color: #ef4444; background-color: #1c2230; text-decoration: none; }
+
+        /* =====================================================================
+           3. ÁREA PRINCIPAL, TOPBAR E FILTROS DE PERÍODO
+           ===================================================================== */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            height: 68px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .global-search { position: relative; width: 380px; }
+        .global-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 0.85rem; }
+        .global-search input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem 0.5rem 2.3rem;
+            color: #fff;
+            font-size: 0.86rem;
+            outline: none;
+        }
+        .global-search input:focus { border-color: var(--primary-blue); }
+
+        .btn-nova-os {
+            background-color: var(--primary-blue);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 0.5rem 1.15rem;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-nova-os:hover { background-color: var(--primary-hover); color: #fff; }
+
+        .content-area { padding: 2rem 2.5rem; }
+
+        /* Cabeçalho da página + pílulas de atalho dos últimos 3 meses + dropdown de períodos */
+        .fin-header-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .page-title { font-size: 1.55rem; font-weight: 600; margin: 0; color: #fff; }
+        .page-subtitle { font-size: 0.85rem; color: #64748b; margin-top: 4px; margin-bottom: 0; }
+
+        .periodo-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .periodo-pills {
+            display: inline-flex;
+            background-color: #0b1322;
+            border: 1px solid #162235;
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .periodo-pill {
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .periodo-pill:hover { color: #fff; text-decoration: none; }
+        .periodo-pill.active {
+            background-color: #0284c7;
+            color: #fff;
+        }
+
+        .periodo-select-box {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        .periodo-select-box i {
+            position: absolute;
+            left: 11px;
+            color: #64748b;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+        .periodo-select {
+            background-color: #0b1322;
+            border: 1px solid #162235;
+            border-radius: 8px;
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            padding: 7px 12px 7px 30px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .periodo-select:hover, .periodo-select:focus {
+            border-color: #0284c7;
+            color: #fff;
+        }
+
+        /* Banner verde exibido após confirmar o pagamento de uma OS */
+        .alert-success-figma {
+            background-color: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.45);
+            color: #34d399;
+            border-radius: 8px;
+            padding: 0.85rem 1.25rem;
+            margin-bottom: 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+        }
+        .alert-success-figma button {
+            background: none;
+            border: none;
+            color: #34d399;
+            font-size: 0.84rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* =====================================================================
+           4. GRADE DE 3 CARDS DE INDICADORES FINANCEIROS (KPIs)
+           ===================================================================== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.6rem;
+        }
+        @media (max-width: 992px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+        }
+
+        .kpi-card {
+            background-color: #0b1322;
+            border: 1px solid #162235;
+            border-radius: 12px;
+            padding: 1.35rem 1.4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.84rem;
+            color: #94a3b8;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 600;
+            line-height: 1.15;
+            margin-bottom: 0.55rem;
+            letter-spacing: -0.3px;
+        }
+        .val-blue { color: #0ea5e9; }
+        .val-emerald { color: #10b981; }
+        .val-red { color: #ef4444; }
+
+        .kpi-sub { font-size: 0.78rem; color: #64748b; margin-bottom: 0.85rem; }
+
+        .kpi-progress {
+            width: 100%;
+            height: 3px;
+            background-color: #162235;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .kpi-progress-bar { height: 100%; border-radius: 999px; }
+
+        /* =====================================================================
+           5. GRADE INFERIOR (TABELA LANÇAMENTOS + GRÁFICO DONUT)
+           ===================================================================== */
+        .fin-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 1.4rem;
+            align-items: start;
+        }
+        @media (max-width: 1180px) {
+            .fin-bottom-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel-card {
+            background-color: #0b1322;
+            border: 1px solid #162235;
+            border-radius: 12px;
+            padding: 1.4rem;
+        }
+
+        .lancamentos-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 1.2rem;
+        }
+
+        .panel-title { font-size: 1.05rem; font-weight: 600; color: #f1f5f9; margin: 0; }
+
+        .lancamentos-filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mini-search input {
+            background-color: #080e1a;
+            border: 1px solid #162235;
+            border-radius: 7px;
+            padding: 6px 12px;
+            color: #fff;
+            font-size: 0.82rem;
+            width: 195px;
+            outline: none;
+        }
+        .mini-search input:focus { border-color: #0284c7; }
+
+        .pgto-pills {
+            display: inline-flex;
+            background-color: #080e1a;
+            border: 1px solid #162235;
+            border-radius: 7px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .pgto-pill {
+            padding: 4px 11px;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .pgto-pill:hover { color: #fff; text-decoration: none; }
+        .pgto-pill.active {
+            background-color: #162438;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* Tabela de lançamentos financeiros */
+        .table-fin-wrap { overflow-x: auto; }
+        .table-fin {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+            color: #cbd5e1;
+        }
+        .table-fin th {
+            text-align: left;
+            padding: 0.75rem 0.65rem;
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-bottom: 1px solid #131d2e;
+            white-space: nowrap;
+        }
+        .table-fin td {
+            padding: 0.9rem 0.65rem;
+            border-bottom: 1px solid #131d2e;
+            vertical-align: middle;
+        }
+        .table-fin tr:last-child td { border-bottom: none; }
+
+        .os-num { color: #0ea5e9; font-weight: 600; }
+        .cli-name { color: #f1f5f9; font-weight: 600; line-height: 1.25; }
+        .cli-city { color: #64748b; font-size: 0.75rem; margin-top: 2px; }
+
+        .forma-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+        }
+        .forma-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #0ea5e9;
+            flex-shrink: 0;
+        }
+
+        /* Badges de Status da OS e Situação do Pagamento */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .badge-status .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .status-AB { background-color: rgba(148, 163, 184, 0.12); border: 1px solid rgba(148, 163, 184, 0.25); color: #cbd5e1; }
+        .status-AB .dot { background-color: #94a3b8; }
+        .status-AG { background-color: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; }
+        .status-AG .dot { background-color: #f59e0b; }
+        .status-EA { background-color: rgba(14, 165, 233, 0.14); border: 1px solid rgba(14, 165, 233, 0.35); color: #38bdf8; }
+        .status-EA .dot { background-color: #0ea5e9; }
+        .status-FN { background-color: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; }
+        .status-FN .dot { background-color: #10b981; }
+
+        .badge-pgto-S {
+            display: inline-block;
+            background-color: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            padding: 3px 9px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-pgto-N {
+            display: inline-block;
+            background-color: rgba(239, 68, 68, 0.16);
+            color: #f87171;
+            padding: 3px 9px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Botão verde "Receber" para dar baixa em OS pendentes */
+        .btn-baixar {
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.08);
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.76rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-baixar:hover {
+            background-color: #059669;
+            border-color: #059669;
+            color: #fff;
+        }
+
+        .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+        /* Gráfico Donut SVG + legenda percentual por Forma de Pagamento */
+        .donut-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 1.15rem;
+        }
+
+        .donut-svg-box {
+            position: relative;
+            width: 124px;
+            height: 124px;
+            flex-shrink: 0;
+        }
+
+        .donut-center-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .donut-center-val { font-size: 0.82rem; font-weight: 700; color: #f1f5f9; line-height: 1.15; }
+        .donut-center-sub { font-size: 0.66rem; color: #64748b; margin-top: 2px; }
+
+        .donut-legend-list {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .donut-legend-row { display: flex; flex-direction: column; gap: 4px; }
+        .donut-legend-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            gap: 6px;
+        }
+
+        .donut-legend-name {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #cbd5e1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .donut-legend-pct { color: #f1f5f9; font-weight: 600; flex-shrink: 0; }
+
+        .donut-mini-bar {
+            width: 100%;
+            height: 3px;
+            background-color: #162235;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .donut-mini-fill { height: 100%; border-radius: 999px; }
+
+        /* =====================================================================
+           6. ESTILOS DO MODAL DE CONFIRMAÇÃO DE RECEBIMENTO
+           ===================================================================== */
+        .modal-content-figma {
+            background-color: #0b1322;
+            border: 1px solid #162438;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+        }
+        .modal-header-figma {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1.35rem 1.7rem 1rem;
+            border-bottom: 1px solid #131d2e;
+        }
+        .modal-title-figma { font-size: 1.15rem; font-weight: 600; color: #fff; margin: 0; }
+        .modal-subtitle-figma { font-size: 0.82rem; color: #64748b; margin-top: 3px; }
+        .btn-fechar-modal {
+            background-color: #162033;
+            border: 1px solid #22304a;
+            color: #cbd5e1;
+            border-radius: 6px;
+            padding: 5px 14px;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+        .form-label-figma { font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.4rem; display: block; }
+        .form-input-figma {
+            background-color: #070d18;
+            border: 1px solid #1a2840;
+            border-radius: 6px;
+            color: #fff;
+            width: 100%;
+            padding: 0.58rem 0.85rem;
+            font-size: 0.88rem;
+            outline: none;
+        }
+        .btn-figma-nav {
+            background-color: #131d2e;
+            border: 1px solid #1e2c44;
+            color: #cbd5e1;
+            padding: 0.5rem 1.15rem;
+            border-radius: 6px;
+            font-size: 0.86rem;
+            cursor: pointer;
+        }
+        .btn-figma-save {
+            background-color: #0284c7;
+            border: none;
+            color: #fff;
+            padding: 0.52rem 1.35rem;
+            border-radius: 6px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-figma-save:hover { background-color: #0369a1; }
+    </style>
+</head>
+<body>
+
+    <!-- =====================================================================
+         1. BARRA LATERAL FIXA
+         ===================================================================== -->
+    <aside class="sidebar">
+        <div>
+            <div class="brand-box">
+                <div class="brand-icon"><i class="fas fa-snowflake"></i></div>
+                <div>
+                    <h1 class="brand-title">ClimaOS</h1>
+                    <p class="brand-sub">Gestão de Serviços</p>
+                </div>
+            </div>
+
+            {# Links das rotas principais do sistema #}
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="fas fa-th-large"></i> Painel Geral
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_ordens' %}" class="nav-link">
+                        <i class="fas fa-file-invoice"></i> Ordens de Serviço
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_clientes' %}" class="nav-link">
+                        <i class="fas fa-user-friends"></i> Clientes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_equipamentos' %}" class="nav-link">
+                        <i class="fas fa-tv"></i> Equipamentos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'listar_tecnicos' %}" class="nav-link">
+                        <i class="fas fa-wrench"></i> Equipe Técnica
+                    </a>
+                </li>
+                <li class="nav-item">
+                    {# Classe 'active' destaca o módulo Financeiro #}
+                    <a href="{% url 'financeiro' %}" class="nav-link active">
+                        <i class="fas fa-dollar-sign"></i> Financeiro
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'cadastros_apoio' %}" class="nav-link">
+                        <i class="fas fa-cog"></i> Cadastros de Apoio
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        {# Cartão de perfil do usuário autenticado na sessão #}
+        <div class="user-profile">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle mr-2">{{ usuario_nome|slice:":2"|upper|default:"CE" }}</div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">{{ usuario_nome }}</div>
+                        <div style="font-size: 0.72rem; color: #64748b;">{{ usuario_login }}</div>
+                    </div>
+                </div>
+                <span class="badge-admin">{{ usuario_tipo }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         2. CONTEÚDO PRINCIPAL DO FINANCEIRO
+         ===================================================================== -->
+    <main class="main-wrapper">
+        <!-- Barra superior: busca global preservando o período e o filtro de pagamento -->
+        <header class="topbar">
+            <form method="GET" action="{% url 'financeiro' %}" class="global-search">
+                <input type="hidden" name="periodo" value="{{ periodo }}">
+                <input type="hidden" name="pgto" value="{{ pgto_filtro }}">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ busca }}" placeholder="Buscar OS, cliente, equipamento...">
+            </form>
+
+            <div>
+                <a href="{% url 'listar_ordens' %}" class="btn-nova-os" style="text-decoration: none;">
+                    + Nova OS
+                </a>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <!-- Cabeçalho + atalhos dos últimos 3 meses + caixinha select de períodos -->
+            <div class="fin-header-row">
+                <div>
+                    <h2 class="page-title">Financeiro</h2>
+                    <p class="page-subtitle">Fluxo de caixa e controle de recebimentos</p>
+                </div>
+
+                <div class="periodo-controls">
+                    {# Pílulas de atalho rápido para os 3 últimos meses e visão Geral #}
+                    <div class="periodo-pills">
+                        {% for m in ultimos_3_meses %}
+                        <a href="?periodo={{ m.ym }}&pgto={{ pgto_filtro }}{% if busca %}&q={{ busca }}{% endif %}"
+                           class="periodo-pill {% if periodo == m.ym %}active{% endif %}">
+                            {{ m.label }}
+                        </a>
+                        {% endfor %}
+                        <a href="?periodo=GERAL&pgto={{ pgto_filtro }}{% if busca %}&q={{ busca }}{% endif %}"
+                           class="periodo-pill {% if periodo == 'GERAL' %}active{% endif %}">
+                            Geral
+                        </a>
+                    </div>
+
+                    {# Seletor suspenso (dropdown) que submete automaticamente ao trocar o mês/ano #}
+                    <form method="GET" action="{% url 'financeiro' %}" class="periodo-select-box m-0">
+                        <input type="hidden" name="pgto" value="{{ pgto_filtro }}">
+                        {% if busca %}<input type="hidden" name="q" value="{{ busca }}">{% endif %}
+                        <i class="far fa-calendar-alt"></i>
+                        <select name="periodo" class="periodo-select" onchange="this.form.submit()" title="Selecionar período">
+                            <option value="GERAL" {% if periodo == 'GERAL' %}selected{% endif %}>Todos os períodos</option>
+                            {% for md in meses_disponiveis %}
+                            <option value="{{ md.ym }}" {% if periodo == md.ym %}selected{% endif %}>{{ md.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            {# Banner verde de feedback exibido após confirmar a baixa de pagamento de uma OS #}
+            {% if msg_tipo == 'baixada' %}
+            <div class="alert-success-figma" id="bannerFinFeedback">
+                <span>Pagamento da Ordem de Serviço #{{ os_num }} confirmado como <strong>Pago</strong> com sucesso.</span>
+                <button type="button" onclick="document.getElementById('bannerFinFeedback').style.display='none'">Fechar</button>
+            </div>
+            {% endif %}
+
+            <!-- ===============================================================
+                 3 CARDS DE INDICADORES FINANCEIROS (KPIs)
+                 =============================================================== -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>Faturamento Bruto</span>
+                        <span style="color: #0ea5e9; font-weight: 600; font-size: 0.85rem;">R$</span>
+                    </div>
+                    <div class="kpi-value val-blue">R$ {{ faturamento_bruto|floatformat:2 }}</div>
+                    <div class="kpi-sub">{{ total_lancamentos }} lançamento{{ total_lancamentos|pluralize }}</div>
+                    <div class="kpi-progress">
+                        {# Os atributos data-width e data-bg são aplicados via JavaScript no final #}
+                        <div class="kpi-progress-bar"
+                             data-width="{% if total_lancamentos > 0 %}100{% else %}0{% endif %}"
+                             data-bg="#0284c7"></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>Total Recebido</span>
+                        <i class="fas fa-check" style="color: #10b981; font-size: 0.85rem;"></i>
+                    </div>
+                    <div class="kpi-value val-emerald">R$ {{ total_recebido|floatformat:2 }}</div>
+                    <div class="kpi-sub">{{ qtd_pagas }} OS paga{{ qtd_pagas|pluralize }}</div>
+                    <div class="kpi-progress">
+                        <div class="kpi-progress-bar" data-width="{{ pct_recebido }}" data-bg="#10b981"></div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span>A Receber</span>
+                        <i class="far fa-clock" style="color: #ef4444; font-size: 0.88rem;"></i>
+                    </div>
+                    <div class="kpi-value val-red">R$ {{ total_receber|floatformat:2 }}</div>
+                    <div class="kpi-sub">{{ qtd_pendentes }} OS pendente{{ qtd_pendentes|pluralize }}</div>
+                    <div class="kpi-progress">
+                        <div class="kpi-progress-bar" data-width="{{ pct_receber }}" data-bg="#ef4444"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===============================================================
+                 GRADE INFERIOR: TABELA LANÇAMENTOS (ESQUERDA) + DONUT (DIREITA)
+                 =============================================================== -->
+            <div class="fin-bottom-grid">
+                <!-- Coluna Esquerda: Tabela de Lançamentos Financeiros -->
+                <div class="panel-card">
+                    <div class="lancamentos-header">
+                        <h3 class="panel-title">Lançamentos</h3>
+
+                        <div class="lancamentos-filters">
+                            {# Busca local por número da OS ou nome do cliente mantendo o período e filtro #}
+                            <form method="GET" action="{% url 'financeiro' %}" class="mini-search m-0">
+                                <input type="hidden" name="periodo" value="{{ periodo }}">
+                                <input type="hidden" name="pgto" value="{{ pgto_filtro }}">
+                                <input type="text" name="q" value="{{ busca }}" placeholder="Buscar OS ou cliente...">
+                            </form>
+
+                            {# Abas de filtro de situação de pagamento: Todos, Pagos (S) ou Pendentes (N) #}
+                            <div class="pgto-pills">
+                                <a href="?periodo={{ periodo }}&pgto=TODOS{% if busca %}&q={{ busca }}{% endif %}"
+                                   class="pgto-pill {% if pgto_filtro == 'TODOS' %}active{% endif %}">Todos</a>
+                                <a href="?periodo={{ periodo }}&pgto=S{% if busca %}&q={{ busca }}{% endif %}"
+                                   class="pgto-pill {% if pgto_filtro == 'S' %}active{% endif %}">Pagos</a>
+                                <a href="?periodo={{ periodo }}&pgto=N{% if busca %}&q={{ busca }}{% endif %}"
+                                   class="pgto-pill {% if pgto_filtro == 'N' %}active{% endif %}">Pendentes</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-fin-wrap">
+                        <table class="table-fin">
+                            <thead>
+                                <tr>
+                                    <th>OS</th>
+                                    <th>Cliente</th>
+                                    <th>Data</th>
+                                    <th>Forma Pgto</th>
+                                    <th>Valor</th>
+                                    <th>Status OS</th>
+                                    <th>Pgto</th>
+                                    <th class="text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in lancamentos %}
+                                <tr>
+                                    <td class="os-num">#{{ item.id_os }}</td>
+                                    <td>
+                                        <div class="cli-name">{{ item.cliente_nome }}</div>
+                                        {% if item.cliente_cidade %}
+                                        <div class="cli-city">{{ item.cliente_cidade }} — {{ item.cliente_uf }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td style="white-space: nowrap;">{{ item.dt_abertura_os|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if item.forma_pagto_nome %}
+                                            <span class="forma-tag"><span class="forma-dot"></span>{{ item.forma_pagto_nome }}</span>
+                                        {% else %}
+                                            <span style="color: #64748b;">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="white-space: nowrap; font-weight: 600; color: #f1f5f9;">
+                                        {% if item.vlr_total and item.vlr_total > 0 %}
+                                            R$ {{ item.vlr_total|floatformat:2 }}
+                                        {% else %}
+                                            R$ 0,00
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.status == 'AB' %}
+                                            <span class="badge-status status-AB"><span class="dot"></span>Aberto</span>
+                                        {% elif item.status == 'AG' %}
+                                            <span class="badge-status status-AG"><span class="dot"></span>Agendado</span>
+                                        {% elif item.status == 'EA' %}
+                                            <span class="badge-status status-EA"><span class="dot"></span>Em Andamento</span>
+                                        {% elif item.status == 'FN' %}
+                                            <span class="badge-status status-FN"><span class="dot"></span>Finalizado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.pago == 'S' %}
+                                            <span class="badge-pgto-S">Pago</span>
+                                        {% else %}
+                                            <span class="badge-pgto-N">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-right">
+                                        {# Se estiver pendente, mostra o botão "Receber"; se já estiver pago, exibe "Quitado" #}
+                                        {% if item.pago != 'S' %}
+                                        <button type="button" class="btn-baixar"
+                                                data-id="{{ item.id_os }}"
+                                                data-cliente="{{ item.cliente_nome }}"
+                                                data-valor="R$ {{ item.vlr_total|floatformat:2 }}"
+                                                data-forma="{{ item.id_forma_pagto|default:'' }}"
+                                                onclick="abrirModalBaixarOS(this)">
+                                            Receber
+                                        </button>
+                                        {% else %}
+                                        <span style="font-size: 0.76rem; color: #475569;">Quitado</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        Nenhum lançamento financeiro encontrado para o filtro selecionado.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Gráfico Donut SVG "Por Forma de Pagamento" -->
+                <div class="panel-card">
+                    <h3 class="panel-title">Por Forma de Pagamento</h3>
+
+                    {% if formas_chart %}
+                    <div class="donut-wrap">
+                        <div class="donut-svg-box">
+                            {# SVG rotacionado em -90 graus para o arco começar no topo (12h) #}
+                            <svg width="124" height="124" viewBox="0 0 110 110" style="transform: rotate(-90deg);">
+                                {# Trilho circular de fundo #}
+                                <circle cx="55" cy="55" r="42" fill="transparent" stroke="#162235" stroke-width="14"></circle>
+                                {# Cada fatia colorida usa stroke-dasharray e stroke-dashoffset calculados no views.py #}
+                                {% for f in formas_chart %}
+                                <circle cx="55" cy="55" r="42" fill="transparent"
+                                        stroke="{{ f.cor }}"
+                                        stroke-width="14"
+                                        stroke-dasharray="{{ f.dash_array }}"
+                                        stroke-dashoffset="{{ f.dash_offset }}">
+                                </circle>
+                                {% endfor %}
+                            </svg>
+                            {# Texto centralizado dentro do anel do Donut com o total recebido #}
+                            <div class="donut-center-text">
+                                <div class="donut-center-val">R${{ total_recebido|floatformat:2 }}</div>
+                                <div class="donut-center-sub">recebido</div>
+                            </div>
+                        </div>
+
+                        {# Legenda lateral com nome, percentual e mini-barra proporcional de cada forma #}
+                        <div class="donut-legend-list">
+                            {% for f in formas_chart %}
+                            <div class="donut-legend-row">
+                                <div class="donut-legend-top">
+                                    <span class="donut-legend-name" title="{{ f.nome }}">
+                                        <span class="legend-dot" data-bg="{{ f.cor }}"></span>
+                                        {{ f.nome }}
+                                    </span>
+                                    <span class="donut-legend-pct">{{ f.pct }}%</span>
+                                </div>
+                                <div class="donut-mini-bar">
+                                    <div class="donut-mini-fill" data-width="{{ f.pct }}" data-bg="{{ f.cor }}"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4" style="color: #64748b; font-size: 0.84rem;">
+                        Nenhum recebimento registrado neste período.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         3. MODAL DE CONFIRMAÇÃO DE RECEBIMENTO (DAR BAIXA NA OS)
+         ===================================================================== -->
+    <div class="modal fade" id="modalBaixarOS" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+            <div class="modal-content modal-content-figma">
+                <div class="modal-header-figma">
+                    <div>
+                        <h5 class="modal-title-figma" id="tituloBaixarOS">Confirmar Recebimento</h5>
+                        <div class="modal-subtitle-figma" id="subtituloBaixarOS">Registre a entrada financeira desta OS.</div>
+                    </div>
+                    <button type="button" class="btn-fechar-modal" data-dismiss="modal">Fechar</button>
+                </div>
+
+                {# O action deste formulário é preenchido dinamicamente pelo JS com /financeiro/baixar/<id>/ #}
+                <form method="POST" id="formBaixarOS" action="">
+                    {% csrf_token %}
+                    {# Envia o período atual para a view redirecionar de volta ao mesmo filtro após salvar #}
+                    <input type="hidden" name="periodo_retorno" value="{{ periodo }}">
+
+                    <div class="p-4">
+                        <div class="mb-3" style="background-color: #080e1a; border: 1px solid #162438; border-radius: 8px; padding: 0.9rem 1rem;">
+                            <div style="font-size: 0.76rem; color: #64748b; text-transform: uppercase;">Cliente / Valor a Receber</div>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: #f1f5f9; margin-top: 2px;" id="clienteBaixarOS">—</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: #10b981; margin-top: 4px;" id="valorBaixarOS">R$ 0,00</div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="form-label-figma">Forma de Pagamento Utilizada</label>
+                            <select name="id_forma_pagto" id="formaBaixarOS" class="form-input-figma">
+                                <option value="">Manter / Não informada</option>
+                                {% for fp in formas_pgto_select %}
+                                <option value="{{ fp.id_forma_pagto }}">{{ fp.descricao }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end p-3 px-4" style="border-top: 1px solid #131d2e; gap: 10px;">
+                        <button type="button" class="btn-figma-nav" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-figma-save" style="background-color: #059669;">
+                            Confirmar Pagamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts jQuery e Bootstrap 4.6 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* =====================================================================
+           4. APLICAÇÃO DE ESTILOS DINÂMICOS E ABERTURA DO MODAL DE BAIXA
+           ===================================================================== */
+        // Lê os atributos data-width e data-bg renderizados pelo Django e aplica no CSS inline
+        // (evita avisos de sintaxe do VS Code quando há variáveis dentro de style="")
+        document.querySelectorAll('[data-width]').forEach(el => {
+            el.style.width = (el.getAttribute('data-width') || 0) + '%';
+        });
+        document.querySelectorAll('[data-bg]').forEach(el => {
+            el.style.backgroundColor = el.getAttribute('data-bg');
+        });
+
+        // Preenche o modal de baixa com os dados da OS clicada e configura a URL de envio do POST
+        function abrirModalBaixarOS(btn) {
+            const id = btn.getAttribute('data-id');
+            const cliente = btn.getAttribute('data-cliente');
+            const valor = btn.getAttribute('data-valor');
+            const forma = btn.getAttribute('data-forma');
+
+            document.getElementById('tituloBaixarOS').innerText = 'Confirmar Recebimento — OS #' + id;
+            document.getElementById('clienteBaixarOS').innerText = cliente;
+            document.getElementById('valorBaixarOS').innerText = valor;
+            document.getElementById('formaBaixarOS').value = forma;
+            document.getElementById('formBaixarOS').action = '/financeiro/baixar/' + id + '/';
+
+            $('#modalBaixarOS').modal('show');
+        }
+    </script>
+</body>
+</html>
